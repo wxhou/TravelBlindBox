@@ -10,7 +10,7 @@ interface MapVisualizationProps {
   className?: string
 }
 
-export function MapVisualization({ pois, className = 'h-96' }: MapVisualizationProps) {
+export function MapVisualization({ pois, className = 'h-64 sm:h-80 md:h-96 lg:h-[400px]' }: MapVisualizationProps) {
   const [mapInstance, setMapInstance] = useState<any>(null)
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null)
 
@@ -57,13 +57,13 @@ export function MapVisualization({ pois, className = 'h-96' }: MapVisualizationP
   }
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg overflow-hidden ${className}`}>
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <span className="text-2xl">🗺️</span>
+    <div className={`bg-white rounded-lg sm:rounded-xl shadow-lg overflow-hidden ${className}`}>
+      <div className="p-3 sm:p-4 border-b border-gray-200">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <span className="text-xl sm:text-2xl">🗺️</span>
           旅行路线地图
         </h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-xs sm:text-sm text-gray-600 mt-1">
           查看景点、酒店、餐厅位置及路线轨迹
         </p>
       </div>
@@ -104,18 +104,18 @@ export function MapVisualization({ pois, className = 'h-96' }: MapVisualizationP
       </div>
 
       {selectedPOI && (
-        <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm">
+        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 bg-white rounded-lg shadow-lg p-3 sm:p-4 max-w-sm sm:max-w-md mx-auto sm:mx-0">
           <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-800">{selectedPOI.name}</h4>
-              <p className="text-sm text-gray-600 mt-1">{selectedPOI.category}</p>
-              <p className="text-sm text-gray-500 mt-1">{selectedPOI.address}</p>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{selectedPOI.name}</h4>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">{selectedPOI.category}</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">{selectedPOI.address}</p>
             </div>
             <button
               onClick={() => setSelectedPOI(null)}
-              className="text-gray-400 hover:text-gray-600 ml-2"
+              className="touch-target-min text-gray-400 hover:text-gray-600 ml-2 flex-shrink-0 rounded-full p-1 hover:bg-gray-100 transition-colors"
             >
-              ✕
+              <span className="text-sm sm:text-base">✕</span>
             </button>
           </div>
         </div>

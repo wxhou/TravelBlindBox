@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import type { TravelParams, TravelRoute, ApiResponse } from '../types'
 import { AI_CONFIG, validateConfig, isConfigured } from './aiConfig'
 import { TRAVEL_PLANNING_SYSTEM_PROMPT, generateTravelPlanningPrompt } from './prompts'
-import { amapService } from './amapService'
+import { unifiedAmapService } from './unifiedAmapService'
 
 let openaiClient: OpenAI | null = null
 
@@ -56,6 +56,10 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
               type: 'string',
               description: '城市名称，例如：东京、北京、上海'
             },
+            keywords: {
+              type: 'string',
+              description: '景点关键词，例如：雪山、温泉、历史古迹等'
+            },
             limit: {
               type: 'number',
               description: '返回结果数量，默认为10'
@@ -77,6 +81,10 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
               type: 'string',
               description: '城市名称，例如：东京、北京、上海'
             },
+            keywords: {
+              type: 'string',
+              description: '酒店关键词，例如：豪华、精品、山景等'
+            },
             limit: {
               type: 'number',
               description: '返回结果数量，默认为5'
@@ -97,6 +105,10 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
             city: {
               type: 'string',
               description: '城市名称，例如：东京、北京、上海'
+            },
+            keywords: {
+              type: 'string',
+              description: '餐厅关键词，例如：当地美食、烧烤、传统菜等'
             },
             limit: {
               type: 'number',
@@ -159,7 +171,8 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
         console.log(`🛠️ AI请求调用${message.tool_calls.length}个工具`)
 
         for (const toolCall of message.tool_calls) {
-          const { id, function: func } = toolCall
+          const { id } = toolCall
+          const func = (toolCall as any).function
           const { name, arguments: args } = func
           console.log(`🔧 调用工具: ${name}`)
 
@@ -169,13 +182,13 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
 
             switch (name) {
               case 'searchAttractions':
-                toolResult = await amapService.searchAttractions(params.city, params.limit || 10)
+                toolResult = await unifiedAmapService.searchAttractions(params.city, params.keywords, params.limit || 10)
                 break
               case 'searchHotels':
-                toolResult = await amapService.searchHotels(params.city, params.limit || 5)
+                toolResult = await unifiedAmapService.searchHotels(params.city, params.keywords, params.limit || 5)
                 break
               case 'searchRestaurants':
-                toolResult = await amapService.searchRestaurants(params.city, params.limit || 10)
+                toolResult = await unifiedAmapService.searchRestaurants(params.city, params.keywords, params.limit || 10)
                 break
               default:
                 throw new Error(`未知工具: ${name}`)

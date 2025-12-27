@@ -12,7 +12,7 @@ export interface POI {
   telephone?: string
   photos?: string[]
   tag?: string
-  source?: 'amap' | 'cache'
+  source?: 'amap' | 'cache' | 'mcp'
 }
 
 export interface POIActivity {
@@ -104,4 +104,49 @@ export interface OpenAIError {
   message: string
   type: string
   code?: string
+}
+
+export interface StoredRoute extends TravelRoute {
+  id: string
+  savedAt: string
+  status: 'revealed' | 'scheduled'
+  userNotes?: string
+  generationParams?: TravelParams
+}
+
+export interface RouteHistoryFilters {
+  status?: 'revealed' | 'scheduled' | 'all'
+  dateRange?: {
+    start: string
+    end: string
+  }
+  searchQuery?: string
+}
+
+export interface RouteStorageConfig {
+  maxAgeDays: number
+  maxRecords: number
+  enableCompression: boolean
+}
+
+export interface StorageStats {
+  totalRecords: number
+  storageUsed: number
+  oldestRecord?: string
+  newestRecord?: string
+}
+
+export const StorageErrorCode = {
+  QUOTA_EXCEEDED: 'QUOTA_EXCEEDED',
+  SERIALIZATION_FAILED: 'SERIALIZATION_FAILED',
+  INVALID_DATA: 'INVALID_DATA',
+  NOT_FOUND: 'NOT_FOUND',
+  PERMISSION_DENIED: 'PERMISSION_DENIED'
+} as const
+
+export type StorageErrorCode = typeof StorageErrorCode[keyof typeof StorageErrorCode]
+
+export interface StorageError extends Error {
+  code: StorageErrorCode
+  originalError?: Error
 }

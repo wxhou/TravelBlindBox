@@ -30,7 +30,7 @@ export const generateTravelPlanningPrompt = (params: TravelParams): string => {
 
   const prompt = `生成3条${params.duration}天${params.destinationPreference}旅行路线，预算范围${params.budgetMin}-${params.budgetMax}元，${departureInfo}，出发日期${params.departureDate}，交通${params.transportation}。
 
-请先调用高德地图工具搜索该城市的景点、酒店和餐厅信息，然后基于这些真实数据生成具体的旅行路线建议。
+请先调用高德地图工具搜索该城市的景点、酒店和餐厅信息，并在调用时传递${params.destinationPreference}相关的关键词。例如，如果目的地偏好是"雪山"，则在景点搜索时传递"雪山"作为关键词。
 
 每条路线请提供封面图片搜索关键词，用于从图片库搜索相关封面图片。
 每个行程日请提供图片搜索关键词，用于搜索该日行程的代表性图片。

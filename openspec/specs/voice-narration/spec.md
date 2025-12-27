@@ -1,0 +1,53 @@
+# voice-narration Specification
+
+## Purpose
+TBD - created by archiving change add-voice-narration. Update Purpose after archive.
+## Requirements
+### Requirement: 语音解说功能
+系统必须提供自动生成并播放当前页面信息解说的功能，支持路线切换时自动更新解说内容。
+
+#### Scenario: 用户开启语音解说
+- **WHEN** 用户点击大卡片内的音响按钮
+- **THEN** 系统自动生成当前路线的语音解说文本并开始播放
+
+#### Scenario: 路线切换时解说更新
+- **WHEN** 用户切换到下一条路线
+- **THEN** 系统自动停止当前解说并生成新路线的解说内容
+
+#### Scenario: 用户关闭语音解说
+- **WHEN** 用户再次点击音响按钮或关闭声音
+- **THEN** 系统立即停止当前语音播放并禁用解说功能
+
+### Requirement: TTS服务集成
+系统必须集成Web Speech API或其他免费开源TTS服务，确保语音解说的可用性。
+
+#### Scenario: TTS服务正常工作
+- **WHEN** TTS服务可用且配置正确
+- **THEN** 能够将文本转换为中文语音并播放
+
+#### Scenario: TTS服务异常处理
+- **WHEN** TTS服务不可用或发生错误
+- **THEN** 系统应显示友好的错误提示并降级到无语音模式
+
+### Requirement: 语音控制界面
+系统必须在大卡片内提供直观的语音控制按钮。
+
+#### Scenario: 音响按钮显示
+- **WHEN** 语音解说功能可用
+- **THEN** 大卡片内显示音响图标按钮，状态反映当前语音播放情况
+
+#### Scenario: 语音播放状态反馈
+- **WHEN** 语音正在播放时
+- **THEN** 音响按钮显示播放状态，用户可以直观看到语音活动
+
+### Requirement: 语音内容生成
+系统必须根据当前路线的详细信息生成合适的语音解说文本。
+
+#### Scenario: 路线信息解说生成
+- **WHEN** 生成路线解说文本
+- **THEN** 包含路线标题、主题、亮点、行程安排等关键信息，语言自然流畅
+
+#### Scenario: 解说文本长度控制
+- **WHEN** 生成解说文本
+- **THEN** 控制文本长度适中，避免语音播放时间过长影响用户体验
+

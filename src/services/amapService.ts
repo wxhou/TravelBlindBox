@@ -12,7 +12,7 @@ interface AMapPOI {
   telephone?: string
   photos?: string[]
   tag?: string
-  source?: 'amap' | 'cache'
+  source?: 'amap' | 'cache' | 'mcp'
 }
 
 interface AMapSearchResult {
@@ -124,19 +124,19 @@ class AMapService {
     })
   }
 
-  async searchAttractions(city: string, keywords?: string): Promise<AMapPOI[]> {
+  async searchAttractions(city: string, keywords?: string, limit: number = 10): Promise<AMapPOI[]> {
     const query = keywords ? `${keywords} 景点` : '景点'
-    return this.searchPOIs(query, city, '风景名胜;旅游景点')
+    return this.searchPOIs(query, city, '风景名胜;旅游景点', limit)
   }
 
-  async searchHotels(city: string, keywords?: string): Promise<AMapPOI[]> {
+  async searchHotels(city: string, keywords?: string, limit: number = 5): Promise<AMapPOI[]> {
     const query = keywords ? `${keywords} 酒店` : '酒店'
-    return this.searchPOIs(query, city, '住宿服务;宾馆酒店')
+    return this.searchPOIs(query, city, '住宿服务;宾馆酒店', limit)
   }
 
-  async searchRestaurants(city: string, keywords?: string): Promise<AMapPOI[]> {
+  async searchRestaurants(city: string, keywords?: string, limit: number = 10): Promise<AMapPOI[]> {
     const query = keywords ? `${keywords} 餐厅` : '餐厅'
-    return this.searchPOIs(query, city, '餐饮服务')
+    return this.searchPOIs(query, city, '餐饮服务', limit)
   }
 }
 

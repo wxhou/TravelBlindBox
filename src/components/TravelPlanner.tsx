@@ -72,19 +72,19 @@ export function TravelPlanner({ onGenerateRoutes, loading, logs }: TravelPlanner
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-blue-100 rounded-lg">
-          <Sparkles className="w-6 h-6 text-blue-600" />
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
+          <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-gray-800">旅行参数设置</h2>
-          <p className="text-gray-600 text-sm">告诉我们您的旅行偏好，AI将为您规划完美路线</p>
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">旅行参数设置</h2>
+          <p className="text-gray-600 text-xs sm:text-sm">告诉我们您的旅行偏好，AI将为您规划完美路线</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <Calendar className="w-4 h-4" />
@@ -144,24 +144,22 @@ export function TravelPlanner({ onGenerateRoutes, loading, logs }: TravelPlanner
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <DollarSign className="w-4 h-4" />
-              预算范围
-            </label>
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <BudgetRangeSlider
-                min={500}
-                max={10000}
-                value={{ min: params.budgetMin, max: params.budgetMax }}
-                onChange={(value) => setParams(prev => ({ ...prev, budgetMin: value.min, budgetMax: value.max }))}
-              />
-            </div>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <DollarSign className="w-4 h-4" />
+            预算范围
+          </label>
+          <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+            <BudgetRangeSlider
+              min={500}
+              max={10000}
+              value={{ min: params.budgetMin, max: params.budgetMax }}
+              onChange={(value) => setParams(prev => ({ ...prev, budgetMin: value.min, budgetMax: value.max }))}
+            />
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <MapPin className="w-4 h-4" />
@@ -210,40 +208,41 @@ export function TravelPlanner({ onGenerateRoutes, loading, logs }: TravelPlanner
             <Plane className="w-4 h-4" />
             交通方式
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             {TRANSPORTATION_OPTIONS.map(transport => (
               <button
                 key={transport}
                 type="button"
                 onClick={() => setParams(prev => ({ ...prev, transportation: transport }))}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-all duration-200 ${
+                className={`touch-target-min flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 border rounded-lg transition-all duration-200 text-sm sm:text-base ${
                   params.transportation === transport
                     ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-blue-300'
                 }`}
               >
                 {getTransportationIcon(transport)}
-                {transport}
+                <span className="hidden xs:inline">{transport}</span>
+                <span className="xs:hidden text-xs">{transport.length > 2 ? transport.substring(0, 2) : transport}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="pt-6 border-t border-gray-100">
+        <div className="pt-4 sm:pt-6 border-t border-gray-100">
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+            className="touch-target-comfortable w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
           >
             {loading ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                <span className="text-lg">AI正在生成路线...</span>
+                <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white mr-2 sm:mr-3"></div>
+                <span className="text-base sm:text-lg">AI正在生成路线...</span>
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                <span className="text-lg">生成旅行路线</span>
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-base sm:text-lg">生成旅行路线</span>
               </div>
             )}
           </button>
