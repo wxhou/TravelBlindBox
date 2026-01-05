@@ -6,6 +6,8 @@
 
 - **🎯 智能路线生成**：基于AI的个性化旅行路线规划
 - **🗺️ 双模式地图服务**：支持REST API和MCP Hook两种调用方式
+- **🎤 智能语音助手**：多语言语音识别、智能对话、实时翻译
+- **🔊 语音控制导航**：支持语音命令控制应用功能
 - **📱 响应式设计**：优雅的用户界面，适配各种设备
 - **🔧 可配置架构**：灵活的服务配置和扩展能力
 - **🛡️ 错误处理**：完善的降级机制和错误恢复
@@ -19,6 +21,8 @@
 - **AI服务**：OpenAI GPT-4
 - **地图服务**：高德地图 API
 - **MCP协议**：@modelcontextprotocol/sdk
+- **语音技术**：Web Speech API (语音识别/合成)
+- **翻译服务**：MyMemory API / LibreTranslate
 - **状态管理**：React Hooks
 
 ## 📋 环境配置
@@ -110,7 +114,8 @@ npm run lint
 ```
 src/
 ├── components/           # React组件
-│   ├── TravelBlindBox.tsx    # 主要UI组件（含MCP切换）
+│   ├── TravelBlindBox.tsx    # 主要UI组件（含语音助手）
+│   ├── VoiceAssistantUI.tsx  # 语音助手界面
 │   └── ...
 ├── hooks/               # 自定义Hooks
 │   ├── useAmapMcp.ts         # MCP Hook封装
@@ -120,8 +125,13 @@ src/
 │   ├── mcpAmapService.ts     # MCP服务适配器
 │   ├── unifiedAmapService.ts # 统一服务接口
 │   ├── serviceConfig.ts      # 服务配置
-│   └── travelService.ts      # AI旅行服务
+│   ├── travelService.ts      # AI旅行服务
+│   ├── voiceAssistantService.ts # 语音助手主服务
+│   ├── speechRecognitionService.ts # 语音识别服务
+│   ├── translationService.ts # 翻译服务
+│   └── conversationService.ts # 智能对话服务
 ├── types/               # TypeScript类型定义
+│   └── speech-recognition.d.ts # 语音识别API类型声明
 └── ...
 ```
 
@@ -136,6 +146,44 @@ src/
 - 连接状态指示器
 - 当前使用的调用方式
 - 错误状态和重连选项
+
+## 🎤 语音助手功能
+
+### 功能特性
+- **多语言语音识别**：支持中文、英文、日文、韩文
+- **智能对话**：基于AI的旅行相关问答
+- **实时翻译**：语音输入实时翻译成目标语言
+- **语音控制**：支持语音命令控制应用功能
+
+### 使用方法
+
+1. **启动语音助手**：
+   - 点击主界面右上角的「语音助手」按钮
+   - 或使用语音命令"打开语音助手"
+
+2. **语音交互**：
+   - 点击麦克风按钮开始录音
+   - 直接说话进行交流
+   - 支持旅行咨询、导航控制等
+
+3. **语音命令示例**：
+   ```
+   导航命令："下一条路线"、"返回上一页"
+   播放控制："播放"、"暂停"、"停止"
+   设置控制："切换语言"、"开启翻译"
+   旅行咨询："推荐景点"、"有什么美食"
+   ```
+
+4. **语言设置**：
+   - 在语音助手设置面板中选择识别语言
+   - 开启翻译功能并选择目标语言
+   - 支持的翻译语言：英文、日文、韩文
+
+### 技术特点
+- 使用Web Speech API进行语音识别和合成
+- 集成免费翻译API（MyMemory、LibreTranslate）
+- 智能意图识别和上下文管理
+- 降级机制确保功能稳定性
 
 ## 🧪 测试和验证
 

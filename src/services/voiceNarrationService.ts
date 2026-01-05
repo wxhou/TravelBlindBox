@@ -1,3 +1,9 @@
+import { RealTimeInfoManager } from './realTimeInfoManager'
+import type { RealTimeInfoData } from './realTimeInfoManager'
+import type { WeatherData, WeatherAlert } from './weatherService'
+import type { TrafficData } from './trafficService'
+import type { POIStatus } from './poiService'
+import type { EmergencyAlert } from './emergencyService'
 import type { TravelRoute } from '../types'
 
 export interface VoiceNarrationOptions {
@@ -172,6 +178,178 @@ export class VoiceNarrationService {
 
   public getIsPaused(): boolean {
     return this.synthesis.paused
+  }
+
+  public generateRealTimeWeatherNarration(weather: WeatherData): string {
+    const { current, alerts } = weather
+    let text = `当前天气情况：`
+    
+    text += `${current.temperature}度，${current.condition}，`
+    text += `湿度${current.humidity}%，`
+    
+    if (current.windSpeed > 0) {
+      text += `风力${current.windSpeed}级。`
+    } else {
+      text += `微风。`
+    }
+    
+    if (alerts.length > 0) {
+      text += ` 注意：`
+      alerts.forEach(alert => {
+        text += `${alert.title}，${alert.description}。`
+      })
+    }
+    
+    return text
+  }
+
+  public generateRealTimeTrafficNarration(traffic: TrafficData): string {
+    const { route, incidents } = traffic
+    let text = `当前交通状况：`
+    
+    const trafficLevel = route.trafficLevel === 'low' ? '畅通' : 
+                        route.trafficLevel === 'medium' ? '缓慢' : 
+                        route.trafficLevel === 'high' ? '拥堵' : '严重拥堵'
+    
+    text += `${trafficLevel}，`
+    text += `距离目的地${route.distance}公里，`
+    text += `预计${Math.round(route.durationInTraffic / 60)}分钟。`
+    
+    if (incidents.length > 0) {
+      text += ` 交通提示：`
+      incidents.forEach(incident => {
+        if (incident.active) {
+          text += `${incident.location.address}附近有${incident.title}，`
+        }
+      })
+    }
+    
+    return text
+  }
+
+  public generatePOIStatusNarration(pois: POIStatus[]): string {
+    if (pois.length === 0) {
+      return '附近暂无可用景点信息。'
+    }
+    
+    const openPOIs = pois.filter(poi => poi.status.isOpen)
+    const crowdedPOIs = pois.filter(poi => 
+      poi.realTimeInfo.crowdLevel === 'high' || poi.realTimeInfo.crowdLevel === 'very_high'
+    )
+    
+    let text = `景点状态更新：`
+    text += `附近${openPOIs.length}个景点正在开放，`
+    
+    if (crowdedPOIs.length > 0) {
+      text += `${crowdedPOIs.length}个景点较为拥挤。`
+    } else {
+      text += `整体客流适中。`
+    }
+    
+    const recommendations = openPOIs
+      .filter(poi => poi.realTimeInfo.crowdLevel === 'low' || poi.realTimeInfo.crowdLevel === 'very_low')
+      .slice(0, 2)
+    
+    if (recommendations.length > 0) {
+      text += ` 推荐：`
+      recommendations.forEach(poi => {
+        text += `${poi.basicInfo.name}，`
+      })
+    }
+    
+    return text
+  }
+
+  public generateEmergencyNarration(alerts: EmergencyAlert[], resources: any[]): string {
+    const activeAlerts = alerts.filter(alert => alert.active)
+    const criticalAlerts = activeAlerts.filter(alert => alert.severity === 'critical')
+    
+    if (criticalAlerts.length > 0) {
+      const alert = criticalAlerts[0]
+      return `紧急提醒：${alert.title}。${alert.description}。请立即采取安全措施。记住紧急电话：报警110、火警119、急救120。`
+    } else if (activeAlerts.length > 0) {
+      const alert = activeAlerts[0]
+      return `安全提醒：${alert.title}。${alert.description}。请关注相关信息。`
+    } else {
+      return `当前区域安全状况良好，附近有${resources.length}个应急设施。记住紧急电话：报警110、火警119、急救120。`
+    }
+  }
+
+  public generateComprehensiveNarration(data: RealTimeInfoData): string {
+    let text = '实时信息播报开始。'
+    
+    // 天气信息
+    if (data.weather.data) {
+      text += this.generateRealTimeWeatherNarration(data.weather.data)
+    }
+    
+    // 交通信息
+    if (data.traffic.data) {
+      text += ' ' + this.generateRealTimeTrafficNarration(data.traffic.data)
+    }
+    
+    // 景点信息
+    if (data.pois.data.length > 0) {
+      text += ' ' + this.generatePOIStatusNarration(data.pois.data)
+    }
+    
+    // 紧急信息
+    if (data.emergency.alerts.length > 0 || data.emergency.resources.length > 0) {
+      text += ' ' + this.generateEmergencyNarration(data.emergency.alerts, data.emergency.resources)
+    }
+    
+    text += ' 实时信息播报结束。'
+    
+    return text
+  }
+
+  public async speakRealTimeInfo(data: RealTimeInfoData): Promise<void> {
+    const text = this.generateComprehensiveNarration(data)
+    return this.speak(text, {
+      rate: 0.9,
+      pitch: 1.0,
+      volume: 1.0
+    })
+  }
+
+  public async speakWeatherAlert(alert: WeatherAlert): Promise<void> {
+    let text = `天气预警：`
+    text += `${alert.title}。`
+    text += `${alert.description}。`
+    
+    if (alert.recommendations.length > 0) {
+      text += `建议：`
+      alert.recommendations.forEach((rec: string) => {
+        text += `${rec}，`
+      })
+    }
+    
+    return this.speak(text, {
+      rate: 0.8,
+      pitch: 1.1,
+      volume: 1.0
+    })
+  }
+
+  public async speakEmergencyAlert(alert: EmergencyAlert): Promise<void> {
+    let text = `紧急预警：`
+    text += `${alert.title}。`
+    text += `${alert.description}。`
+    
+    if (alert.instructions.length > 0) {
+      text += `请立即：`
+      alert.instructions.forEach((instruction: string) => {
+        text += `${instruction}，`
+      })
+    }
+    
+    text += '如有需要请拨打紧急电话：报警110、火警119、急救120。'
+    
+    return this.speak(text, {
+      rate: 0.7,
+      pitch: 1.2,
+      volume: 1.0
+    })
   }
 }
 

@@ -7,6 +7,8 @@ TravelBlindBox是一个基于AI的智能旅行盲盒生成器，旨在为用户�
 核心功能包括：
 - 🎯 AI驱动的智能路线生成
 - 🗺️ 双模式地图服务集成（REST API + MCP Hook）
+- 🎤 智能语音助手（多语言识别、智能对话、实时翻译）
+- 🔊 语音控制导航和命令执行
 - 📱 响应式用户界面设计
 - 🔧 可配置的服务架构
 - 🛡️ 完善的错误处理和降级机制
@@ -27,8 +29,13 @@ TravelBlindBox是一个基于AI的智能旅行盲盒生成器，旨在为用户�
 - **@amap/amap-jsapi-loader 1.0.1** - 高德地图JavaScript API加载器
 
 ### AI服务
-- **OpenAI API 6.15.0** - GPT-4驱动的旅行路线生成
+- **OpenAI API 6.15.0** - GPT-4驱动的旅行路线生成和智能对话
 - **lucide-react 0.562.0** - 现代化图标库
+
+### 语音技术
+- **Web Speech API** - 浏览器原生语音识别和语音合成
+- **MyMemory API** - 免费翻译服务
+- **LibreTranslate API** - 备用翻译服务
 
 ### 协议和标准
 - **@modelcontextprotocol/sdk 1.25.1** - MCP协议SDK
@@ -135,6 +142,12 @@ TravelBlindBox是一个基于AI的智能旅行盲盒生成器，旨在为用户�
 - AI生成内容的结构化处理
 - 错误处理和重试机制
 
+### 语音技术集成
+- Web Speech API的语音识别和合成
+- 多语言语音识别优化
+- 实时翻译技术集成
+- 语音命令解析和意图识别
+
 ## Important Constraints
 
 ### 技术约束
@@ -158,7 +171,9 @@ TravelBlindBox是一个基于AI的智能旅行盲盒生成器，旨在为用户�
 
 ### 核心服务依赖
 - **高德地图Web服务**: 地图数据、路径规划、POI搜索
-- **OpenAI API**: AI驱动的旅行路线生成
+- **OpenAI API**: AI驱动的旅行路线生成和智能对话
+- **MyMemory API**: 实时翻译服务
+- **LibreTranslate API**: 备用翻译服务
 - **MCP服务器**: 标准化服务调用接口（实验性）
 
 ### 第三方库依赖
@@ -179,5 +194,5 @@ TravelBlindBox是一个基于AI的智能旅行盲盒生成器，旨在为用户�
 ---
 
 **项目维护者**: TravelBlindBox开发团队  
-**最后更新**: 2025-12-27  
-**文档版本**: v1.0.0
+**最后更新**: 2025-12-28  
+**文档版本**: v1.1.0 - 新增智能语音助手功能

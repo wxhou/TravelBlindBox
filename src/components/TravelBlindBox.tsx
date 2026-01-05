@@ -4,7 +4,8 @@ import { useGeolocation } from '../hooks/useGeolocation'
 import { getUnifiedAmapService } from '../services/unifiedAmapService'
 import { isMcpEnabled } from '../services/serviceConfig'
 import { RouteHistory } from './RouteHistory'
-import { Clock } from 'lucide-react'
+import { VoiceAssistantUI } from './VoiceAssistantUI'
+import { Clock, Mic } from 'lucide-react'
 
 interface TravelBlindBoxProps {
   onGenerateRoutes: (params: TravelParams) => Promise<void>
@@ -25,6 +26,7 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
   const [mcpConnected, setMcpConnected] = useState(false)
   const [mcpConnecting, setMcpConnecting] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false)
 
   // const [apiMode, setApiMode] = useState<'rest' | 'mcp'>('rest')
 
@@ -103,6 +105,14 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
 
   const handleHistoryRouteSelect = (route: any) => {
     setShowHistory(false)
+  }
+
+  const handleVoiceAssistantToggle = () => {
+    setShowVoiceAssistant(!showVoiceAssistant)
+  }
+
+  const handleVoiceAssistantClose = () => {
+    setShowVoiceAssistant(false)
   }
 
   const renderStep = () => {
@@ -385,7 +395,17 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
     <div className="max-w-4xl mx-auto">
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
         <div className="flex justify-between items-center mb-6">
-          <div></div>
+          <button
+            onClick={handleVoiceAssistantToggle}
+            className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium transition-all duration-300 ${
+              showVoiceAssistant
+                ? 'bg-gradient-to-r from-cyan-400/20 to-pink-400/20 border-cyan-400/40 text-cyan-300'
+                : 'bg-white/5 hover:bg-white/10 border-amber-400/20 hover:border-amber-400/40 text-slate-300 hover:text-white'
+            }`}
+          >
+            <Mic className="w-5 h-5" />
+            <span className="text-sm font-medium">语音助手</span>
+          </button>
           <button
             onClick={handleViewHistory}
             className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-amber-400/20 hover:border-amber-400/40 rounded-xl text-slate-300 hover:text-white transition-all duration-300"
@@ -556,6 +576,12 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
           </div>
         </div>
       </div>
+      
+      {/* 语音助手UI */}
+      <VoiceAssistantUI
+        isVisible={showVoiceAssistant}
+        onClose={handleVoiceAssistantClose}
+      />
     </div>
   )
 }
