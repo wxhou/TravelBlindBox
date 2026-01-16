@@ -123,9 +123,9 @@ class WallpaperService {
     }
   }
 
-  private categorizeWallpaper(text: string): ThemeCategory {
+  private categorizeWallpaper(text: string, fallbackIndex: number = 0): ThemeCategory {
     const textLower = text.toLowerCase();
-    
+
     // 更加精确的分类匹配
     const categoryScores = {
       '自然风景': 0,
@@ -138,12 +138,12 @@ class WallpaperService {
 
     // 精确匹配规则（更高权重）
     const exactMatches = {
-      '冬季雪景': ['snow', 'winter', 'snowy', 'christmas', 'reindeer', 'frost', 'snowfall'],
-      '水景河流': ['lake', 'river', 'water', 'ocean', 'beach', 'sea', 'waterfall'],
-      '城市建筑': ['cathedral', 'city', 'building', 'architecture', 'church', 'palace', 'castle'],
-      '动物世界': ['reindeer', 'wildlife', 'animals', 'bird', 'butterfly'],
-      '艺术文化': ['art', 'culture', 'festival', 'performance', 'opera', 'ballet', 'museum'],
-      '自然风景': ['mountain', 'forest', 'trees', 'landscape', 'nature']
+      '冬季雪景': ['snow', 'winter', 'snowy', 'christmas', 'reindeer', 'frost', 'snowfall', 'lapland', 'finland', 'globe', 'santa'],
+      '水景河流': ['lake', 'river', 'water', 'ocean', 'beach', 'coastal', 'sea', 'waterfall', 'lakes', 'superior'],
+      '城市建筑': ['cathedral', 'city', 'building', 'architecture', 'urban', 'church', 'palace', 'castle', 'ruins', 'pier', 'salisbury'],
+      '动物世界': ['reindeer', 'wildlife', 'animals', 'bird', 'butterfly', 'starling', 'murmuration', 'brighton'],
+      '艺术文化': ['art', 'culture', 'festival', 'performance', 'opera', 'ballet', 'museum', 'gallery', 'turkish', 'nutcracker', 'ankara'],
+      '自然风景': ['mountain', 'mountain', 'forest', 'trees', 'nature', 'landscape', 'dawn', 'sunrise', 'sunset', 'valley', 'hills', 'spain', 'asturias', 'covadonga', 'wiltshire', 'england']
     };
 
     // 计算每个分类的得分
@@ -166,23 +166,17 @@ class WallpaperService {
       }
     });
 
-    // 如果没有任何匹配，使用更智能的默认分类
+    // 如果没有任何匹配，使用轮询方式分配到各分类，避免都堆积在第一个分类
     if (maxScore === 0) {
-      // 根据常见的地理和文化词汇进行智能判断
-      if (textLower.includes('spain') || textLower.includes('england') || textLower.includes('finland')) {
-        bestCategory = '自然风景'; // 地理相关的通常归类为自然风景
-      } else if (textLower.includes('museum') || textLower.includes('gallery')) {
-        bestCategory = '艺术文化';
-      } else {
-        bestCategory = '自然风景'; // 默认分类
-      }
+      const categories: ThemeCategory[] = ['自然风景', '城市建筑', '水景河流', '冬季雪景', '动物世界', '艺术文化'];
+      bestCategory = categories[fallbackIndex % categories.length];
     }
 
     return bestCategory;
   }
 
   private categorizeWallpapers(wallpapers: WallpaperImage[]): Record<ThemeCategory, WallpaperImage[]> {
-    const categorized: any = {
+    const categorized: Record<ThemeCategory, WallpaperImage[]> = {
       '自然风景': [],
       '城市建筑': [],
       '水景河流': [],
@@ -191,9 +185,9 @@ class WallpaperService {
       '艺术文化': []
     };
 
-    wallpapers.forEach(wallpaper => {
+    wallpapers.forEach((wallpaper, index) => {
       const text = `${wallpaper.copyright} ${wallpaper.title}`;
-      const category = this.categorizeWallpaper(text);
+      const category = this.categorizeWallpaper(text, index);
       categorized[category].push(wallpaper);
     });
 

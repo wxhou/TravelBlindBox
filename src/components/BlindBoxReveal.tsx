@@ -43,6 +43,22 @@ export function BlindBoxReveal({ routes, onClose }: BlindBoxRevealProps) {
 
   const currentRoute = routes[currentRouteIndex]
 
+  // 派生数据：计算预算范围
+  const budgetRange = currentRoute.totalCost
+    ? `¥${(currentRoute.totalCost * 0.8).toLocaleString()} - ¥${(currentRoute.totalCost * 1.2).toLocaleString()}`
+    : '待定'
+
+  // 派生数据：计算总活动数
+  const totalActivities = currentRoute.itinerary?.reduce(
+    (acc, day) => acc + (day.activities?.length || 0),
+    0
+  ) || 0
+
+  // 派生数据：住宿统计
+  const accommodations = currentRoute.itinerary
+    ?.map(day => day.accommodation)
+    .filter(Boolean) as string[] | undefined
+
   useEffect(() => {
     if (isVoiceEnabled && showDetails && currentRoute) {
       handleStartNarration()
@@ -330,27 +346,27 @@ export function BlindBoxReveal({ routes, onClose }: BlindBoxRevealProps) {
                         </div>
                         <div>
                           <span className="text-amber-400 font-medium">主题风格</span>
-                          <p className="text-white">{currentRoute.theme}</p>
+                          <p className="text-white">{currentRoute.theme || '探索之旅'}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-amber-400/10">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-400 to-red-400 flex items-center justify-center">
                           <span className="text-sm">⏱️</span>
                         </div>
                         <div>
-                          <span className="text-orange-400 font-medium">旅行天数</span>
-                          <p className="text-white">{currentRoute.duration} 天的精彩旅程</p>
+                          <span className="text-orange-400 font-medium">行程天数</span>
+                          <p className="text-white">{currentRoute.duration} 天 · {totalActivities} 个活动</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-amber-400/10">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-400 to-pink-400 flex items-center justify-center">
                           <span className="text-sm">💰</span>
                         </div>
                         <div>
-                          <span className="text-red-400 font-medium">预算范围</span>
-                          <p className="text-white">¥{currentRoute.totalCost.toLocaleString()}</p>
+                          <span className="text-red-400 font-medium">预估花费</span>
+                          <p className="text-white">{budgetRange}</p>
                         </div>
                       </div>
                     </div>

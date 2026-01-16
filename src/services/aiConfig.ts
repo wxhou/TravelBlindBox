@@ -2,7 +2,8 @@ export const AI_CONFIG = {
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
   baseURL: import.meta.env.VITE_OPENAI_BASE_URL || 'https://api.openai.com/v1',
   model: import.meta.env.VITE_AI_MODEL || 'gpt-4',
-  temperature: parseFloat(import.meta.env.VITE_AI_TEMPERATURE || '0.7'),
+  // 提高 temperature 以增加路线多样性 (0.7 -> 0.9)
+  temperature: parseFloat(import.meta.env.VITE_AI_TEMPERATURE || '0.9'),
   maxTokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '2000'),
   timeout: parseInt(import.meta.env.VITE_AI_TIMEOUT || '120000'),
 }

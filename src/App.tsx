@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { TravelParams, TravelRoute } from './types'
 import { TravelBlindBox } from './components/TravelBlindBox'
 import { BlindBoxReveal } from './components/BlindBoxReveal'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import BackgroundSelector from './components/BackgroundSelector'
 import { generateTravelRoutes } from './services/travelService'
 import { useBackground } from './hooks/useBackground'
@@ -87,8 +88,8 @@ function App() {
   }
 
   return (
-    <div 
-      className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
+    <div
+      className="min-h-screen relative overflow-y-auto bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
       style={{
         backgroundImage: currentBackground.startsWith('url(') ? currentBackground : undefined,
         backgroundSize: 'cover',
@@ -102,41 +103,42 @@ function App() {
       {/* 文字增强叠加层 */}
       <div className="absolute inset-0 bg-black/20" />
       
-      <div className="relative container mx-auto px-4 py-8 min-h-screen flex flex-col">
-        <header className="text-center mb-8 z-10">
-          <div className="relative mb-8">
-            <div className="inline-flex items-center justify-center w-24 h-24 mb-6 rounded-full bg-gradient-to-r from-amber-400/30 via-orange-400/30 to-red-400/30 backdrop-blur-xl border border-white/20 shadow-2xl shadow-amber-500/20">
+      <div className="relative container mx-auto px-4 py-4 flex flex-col">
+        <div className="flex-1 flex flex-col">
+        <header className="text-center mb-4 z-10">
+          <div className="relative mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-gradient-to-r from-amber-400/30 via-orange-400/30 to-red-400/30 backdrop-blur-xl border border-white/20 shadow-lg shadow-amber-500/20">
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400/20 to-orange-400/20 animate-pulse" />
-              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-amber-300 via-orange-400 to-red-500 flex items-center justify-center shadow-lg">
-                <div className="text-2xl">🎁</div>
+              <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-amber-300 via-orange-400 to-red-500 flex items-center justify-center shadow-lg">
+                <div className="text-lg">🎁</div>
               </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full flex items-center justify-center">
-                <div className="w-3 h-3 bg-white rounded-full" />
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full" />
               </div>
             </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent w-16" />
-                <TextEnhancer className="text-amber-400/80 text-sm font-light tracking-wider">
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent w-12" />
+                <TextEnhancer className="text-amber-400/80 text-xs font-light tracking-wider">
                   CURATED EXPERIENCES
                 </TextEnhancer>
-                <div className="h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent w-16" />
+                <div className="h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent w-12" />
               </div>
-              
-              <TextEnhancer className="text-6xl font-display font-bold bg-gradient-to-r from-amber-300 via-orange-200 to-red-300 bg-clip-text text-transparent mb-2 tracking-tight">
+
+              <TextEnhancer className="text-4xl font-display font-bold bg-gradient-to-r from-amber-300 via-orange-200 to-red-300 bg-clip-text text-transparent tracking-tight">
                 WANDERLUST
               </TextEnhancer>
-              
-              <TextEnhancer className="text-2xl font-light text-orange-200/90 mb-4 tracking-wide">
+
+              <TextEnhancer className="text-lg font-light text-orange-200/90 tracking-wide">
                 Mystery Travel Collection
               </TextEnhancer>
-              
-              <TextEnhancer className="text-slate-300/90 text-lg font-light leading-relaxed max-w-md mx-auto">
+
+              <TextEnhancer className="text-slate-300/90 text-sm font-light leading-relaxed max-w-md mx-auto">
                 每一个未知的目的地，都是一份精心准备的惊喜礼物
               </TextEnhancer>
-              
-              <div className="flex items-center justify-center gap-4 mt-6">
+
+              <div className="flex items-center justify-center gap-4 mt-3">
                 <div className="flex items-center gap-2 text-amber-400/80">
                   <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
                   <TextEnhancer className="text-sm font-medium">限量体验</TextEnhancer>
@@ -165,43 +167,46 @@ function App() {
         </header>
 
         <main className="flex-1 max-w-6xl mx-auto w-full z-10">
-          <TravelBlindBox
-            onGenerateRoutes={handleGenerateRoutes}
-            loading={loading}
-            logs={logs}
-          />
+          <ErrorBoundary>
+            <TravelBlindBox
+              onGenerateRoutes={handleGenerateRoutes}
+              loading={loading}
+              logs={logs}
+            />
 
-          {error && (
-            <div className="mt-6 p-6 bg-red-500/10 backdrop-blur-sm border border-red-500/20 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <TextEnhancer className="text-red-300 font-body">{error}</TextEnhancer>
+            {error && (
+              <div className="mt-6 p-6 bg-red-500/10 backdrop-blur-sm border border-red-500/20 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <TextEnhancer className="text-red-300 font-body">{error}</TextEnhancer>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {routes.length > 0 && showReveal && (
-            <BlindBoxReveal routes={routes} onClose={() => setShowReveal(false)} />
-          )}
+            {routes.length > 0 && showReveal && (
+              <BlindBoxReveal routes={routes} onClose={() => setShowReveal(false)} />
+            )}
+          </ErrorBoundary>
         </main>
-        
+        </div>
+
         <BackgroundSelector
           isOpen={showBackgroundSelector}
           onClose={() => setShowBackgroundSelector(false)}
           onSelectBackground={handleBackgroundSelect}
         />
         
-        <footer className="text-center mt-12 space-y-4">
+        <footer className="text-center mt-4 space-y-2">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-8 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
+            <div className="w-6 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
             <TextEnhancer className="text-amber-400/60 text-xs font-light tracking-[0.2em]">
               CRAFTED WITH CARE
             </TextEnhancer>
-            <div className="w-8 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
+            <div className="w-6 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
           </div>
-          <TextEnhancer className="text-slate-400/70 text-sm font-light italic">
+          <TextEnhancer className="text-slate-400/70 text-xs font-light italic">
             "旅行的意义不在于目的地，而在于沿途的惊喜与发现"
           </TextEnhancer>
           <div className="flex items-center justify-center gap-1 text-xs text-slate-500/60 font-light">
