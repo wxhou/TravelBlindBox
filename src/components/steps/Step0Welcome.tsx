@@ -1,10 +1,13 @@
 import React from 'react'
+import { Sparkles } from 'lucide-react'
 
 interface Step0WelcomeProps {
   onNext: () => void
+  onStartQuiz?: () => void
+  hasStyleResult?: boolean
 }
 
-export function Step0Welcome({ onNext }: Step0WelcomeProps) {
+export function Step0Welcome({ onNext, onStartQuiz, hasStyleResult }: Step0WelcomeProps) {
   return (
     <div className="text-center space-y-4">
       <div className="relative">
@@ -52,6 +55,21 @@ export function Step0Welcome({ onNext }: Step0WelcomeProps) {
           </div>
         </div>
       </div>
+
+      {/* 风格测试按钮 */}
+      {onStartQuiz && (
+        <button
+          onClick={onStartQuiz}
+          className={`mt-4 px-6 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 mx-auto transition-all ${
+            hasStyleResult
+              ? 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/30'
+              : 'bg-gradient-to-r from-cyan-400/20 to-pink-400/20 hover:from-cyan-400/30 hover:to-pink-400/30 text-white border border-white/20'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          {hasStyleResult ? '已发现您的风格，继续' : '发现您的旅行风格'}
+        </button>
+      )}
     </div>
   )
 }

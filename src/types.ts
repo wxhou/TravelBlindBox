@@ -150,3 +150,29 @@ export interface StorageError extends Error {
   code: StorageErrorCode
   originalError?: Error
 }
+
+// 旅行风格测试类型
+export type TravelStyle = '冒险探索' | '休闲度假' | '文化深度' | '美食之旅' | '极致尊享' | '穷游体验'
+
+export interface StyleQuestion {
+  id: string
+  question: string
+  options: {
+    text: string
+    style: TravelStyle
+    icon: string
+  }[]
+}
+
+export interface TravelStyleResult {
+  primaryStyle: TravelStyle
+  secondaryStyles: TravelStyle[]
+  score: Record<TravelStyle, number>
+  description: string
+  recommendation: string
+}
+
+export interface TravelParamsWithStyle extends TravelParams {
+  travelStyle?: TravelStyle
+  styleResult?: TravelStyleResult
+}

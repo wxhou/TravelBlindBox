@@ -6,7 +6,18 @@
       "mcp__chrome-devtools__take_screenshot",
       "mcp__thinking__sequentialthinking",
       "Bash(npm run build)",
-      "mcp__search__brave_web_search"
+      "mcp__search__brave_web_search",
+      "Bash(npm install:*)",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__get_network_request",
+      "mcp__MiniMax__web_search",
+      "WebFetch(domain:openai.com)",
+      "Bash(pkill:*)"
     ]
   }
 }

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import type { TravelParams } from '../types'
+import type { TravelParams, TravelStyleResult } from '../types'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { getUnifiedAmapService } from '../services/unifiedAmapService'
 import { isMcpEnabled } from '../services/serviceConfig'
 import { RouteHistory } from './RouteHistory'
 import { VoiceAssistantUI } from './VoiceAssistantUI'
+import { TravelStyleQuiz } from './TravelStyleQuiz'
 import { Clock, Mic } from 'lucide-react'
 import {
   Step0Welcome,
@@ -52,6 +53,8 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
 
   const [currentStep, setCurrentStep] = useState(0)
   const [searchMethod, setSearchMethod] = useState<'rest' | 'mcp'>('rest')
+  const [showStyleQuiz, setShowStyleQuiz] = useState(false)
+  const [styleResult, setStyleResult] = useState<TravelStyleResult | null>(null)
   const unifiedService = getUnifiedAmapService()
 
   useEffect(() => {
@@ -88,6 +91,32 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
     setPreferences(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleStyleQuizComplete = (result: TravelStyleResult) => {
+    setStyleResult(result)
+    setShowStyleQuiz(false)
+    // 根据风格设置默认偏好
+    const styleToPreference: Record<string, TravelParams['destinationPreference']> = {
+      '冒险探索': '冒险',
+      '休闲度假': '自然',
+      '文化深度': '文化',
+      '美食之旅': '美食',
+      '极致尊享': '城市',
+      '穷游体验': '自然'
+    }
+    setPreferences(prev => ({
+      ...prev,
+      destinationPreference: styleToPreference[result.primaryStyle] || '自然'
+    }))
+  }
+
+  const handleStyleQuizSkip = () => {
+    setShowStyleQuiz(false)
+  }
+
+  const handleStartQuiz = () => {
+    setShowStyleQuiz(true)
+  }
+
   const handleNextStep = () => {
     if (currentStep < TOTAL_STEPS - 1) {
       setCurrentStep(prev => prev + 1)
@@ -105,7 +134,13 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <Step0Welcome onNext={handleNextStep} />
+        return (
+          <Step0Welcome
+            onNext={handleNextStep}
+            onStartQuiz={handleStartQuiz}
+            hasStyleResult={!!styleResult}
+          />
+        )
       case 1:
         return <Step1Destination preferences={preferences} onPreferenceChange={handlePreferenceChange} />
       case 2:
@@ -244,6 +279,18 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
         isVisible={showVoiceAssistant}
         onClose={handleVoiceAssistantClose}
       />
+
+      {/* Travel Style Quiz Modal */}
+      {showStyleQuiz && (
+        <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-xl overflow-y-auto">
+          <div className="container mx-auto px-4 py-8">
+            <TravelStyleQuiz
+              onComplete={handleStyleQuizComplete}
+              onSkip={handleStyleQuizSkip}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

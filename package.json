@@ -12,10 +12,13 @@
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.25.1",
+    "@types/leaflet": "^1.9.21",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",
     "openai": "^6.15.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-leaflet": "^5.0.0",
     "react-range": "^1.10.0"
   },
   "devDependencies": {

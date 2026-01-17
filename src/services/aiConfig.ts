@@ -4,8 +4,9 @@ export const AI_CONFIG = {
   model: import.meta.env.VITE_AI_MODEL || 'gpt-4',
   // 提高 temperature 以增加路线多样性 (0.7 -> 0.9)
   temperature: parseFloat(import.meta.env.VITE_AI_TEMPERATURE || '0.9'),
-  maxTokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '2000'),
-  timeout: parseInt(import.meta.env.VITE_AI_TIMEOUT || '120000'),
+  // 增加 maxTokens 以支持完整的路线生成 (2000 -> 4000)
+  maxTokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '4000'),
+  timeout: parseInt(import.meta.env.VITE_AI_TIMEOUT || '180000'),
 }
 
 export const validateConfig = () => {
@@ -17,8 +18,8 @@ export const validateConfig = () => {
     throw new Error('AI temperature must be between 0 and 2.')
   }
 
-  if (AI_CONFIG.maxTokens < 100 || AI_CONFIG.maxTokens > 4000) {
-    throw new Error('AI max tokens must be between 100 and 4000.')
+  if (AI_CONFIG.maxTokens < 100 || AI_CONFIG.maxTokens > 8000) {
+    throw new Error('AI max tokens must be between 100 and 8000.')
   }
 }
 

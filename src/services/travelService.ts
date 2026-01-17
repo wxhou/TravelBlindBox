@@ -1,9 +1,124 @@
 import OpenAI from 'openai'
-import type { TravelParams, TravelRoute, ApiResponse } from '../types'
+import type { TravelParams, TravelRoute, ApiResponse, POI } from '../types'
 import { AI_CONFIG, validateConfig, isConfigured } from './aiConfig'
 import { TRAVEL_PLANNING_SYSTEM_PROMPT, generateTravelPlanningPrompt } from './prompts'
 import { unifiedAmapService } from './unifiedAmapService'
 import logger from '../utils/logger'
+
+// JSON Schema for Structured Outputs - 确保AI生成符合预期的JSON格式
+const TRAVEL_ROUTES_JSON_SCHEMA = {
+  type: 'object',
+  properties: {
+    routes: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          theme: { type: 'string' },
+          totalCost: { type: 'number' },
+          duration: { type: 'number' },
+          highlights: {
+            type: 'array',
+            items: { type: 'string' }
+          },
+          coverImageQuery: { type: 'string' },
+          itinerary: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                day: { type: 'number' },
+                activities: {
+                  type: 'array',
+                  items: { type: 'string' }
+                },
+                meals: {
+                  type: 'array',
+                  items: { type: 'string' }
+                },
+                accommodation: { type: 'string' },
+                imageQuery: { type: 'string' }
+              },
+              required: ['day', 'activities', 'meals']
+            }
+          },
+          pois: {
+            type: 'object',
+            properties: {
+              attractions: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    address: { type: 'string' },
+                    location: {
+                      type: 'object',
+                      properties: {
+                        lat: { type: 'number' },
+                        lng: { type: 'number' }
+                      },
+                      required: ['lat', 'lng']
+                    },
+                    category: { type: 'string' },
+                    rating: { type: 'number' },
+                    tag: { type: 'string' }
+                  },
+                  required: ['name', 'address', 'location']
+                }
+              },
+              hotels: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    address: { type: 'string' },
+                    location: {
+                      type: 'object',
+                      properties: {
+                        lat: { type: 'number' },
+                        lng: { type: 'number' }
+                      },
+                      required: ['lat', 'lng']
+                    },
+                    rating: { type: 'number' }
+                  },
+                  required: ['name', 'address', 'location']
+                }
+              },
+              restaurants: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    address: { type: 'string' },
+                    location: {
+                      type: 'object',
+                      properties: {
+                        lat: { type: 'number' },
+                        lng: { type: 'number' }
+                      },
+                      required: ['lat', 'lng']
+                    },
+                    rating: { type: 'number' }
+                  },
+                  required: ['name', 'address', 'location']
+                }
+              }
+            }
+          }
+        },
+        required: ['id', 'title', 'description', 'theme', 'totalCost', 'duration', 'highlights', 'coverImageQuery', 'itinerary']
+      }
+    }
+  },
+  required: ['routes']
+}
 
 // Type definitions for tool calls
 interface ToolCallArguments {
@@ -18,6 +133,202 @@ interface ToolCall {
     name: string
     arguments: string
   }
+}
+
+// 宽松的JSON解析函数 - 处理AI返回的各种JSON格式问题
+function lenientJsonParse<T = any>(jsonString: string): T {
+  // 清理常见的JSON格式问题
+  let cleaned = jsonString.trim()
+
+  // 移除markdown代码块
+  cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/g, '')
+  cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/g, '')
+
+  // 移除控制字符但保留中文标点
+  cleaned = cleaned.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+
+  // 修复未加引号的属性名（JavaScript对象字面量语法）
+  // 匹配 key: value 中的 key
+  cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
+
+  // 尝试标准JSON.parse
+  try {
+    return JSON.parse(cleaned)
+  } catch (e) {
+    logger.debug('第一次JSON解析失败，尝试修复...')
+
+    try {
+      // 移除尾随逗号
+      cleaned = cleaned.replace(/,\s*([}\]])/g, '$1')
+
+      // 处理单引号包裹的字符串
+      const singleQuoteFixed = cleaned.replace(/'([^']*)'/g, (match, content) => {
+        // 避免替换already quoted的内容
+        if (content.includes('"')) return match
+        return `"${content}"`
+      })
+
+      return JSON.parse(singleQuoteFixed)
+    } catch (e2) {
+      // 记录详细的错误信息用于调试
+      const errorPosition = e2 instanceof Error && e2.message.includes('position')
+        ? e2.message.match(/position (\d+)/)?.[1]
+        : 'unknown'
+
+      let contextAround = ''
+      if (errorPosition && !isNaN(parseInt(errorPosition))) {
+        const pos = parseInt(errorPosition)
+        const start = Math.max(0, pos - 200)
+        const end = Math.min(cleaned.length, pos + 200)
+        contextAround = cleaned.substring(start, end)
+      }
+
+      logger.error('JSON解析最终失败:')
+      logger.error('  错误位置:', errorPosition)
+      logger.error('  上下文:', contextAround)
+      logger.error('  内容前500字符:', cleaned.substring(0, 500))
+      logger.error('  内容后500字符:', cleaned.substring(cleaned.length - 500))
+
+      throw new Error(`JSON解析失败: ${e2 instanceof Error ? e2.message : '未知错误'}`)
+    }
+  }
+}
+const cityCoordinates: Record<string, { lat: number; lng: number }> = {
+  '北京': { lat: 39.9042, lng: 116.4074 },
+  '上海': { lat: 31.2304, lng: 121.4737 },
+  '广州': { lat: 23.1291, lng: 113.2644 },
+  '深圳': { lat: 22.5431, lng: 114.0579 },
+  '杭州': { lat: 30.2741, lng: 120.1551 },
+  '成都': { lat: 30.5728, lng: 104.0668 },
+  '重庆': { lat: 29.5630, lng: 106.5516 },
+  '西安': { lat: 34.3416, lng: 108.9398 },
+  '南京': { lat: 32.0603, lng: 118.7969 },
+  '武汉': { lat: 30.5928, lng: 114.3055 },
+  '昆明': { lat: 25.0453, lng: 102.7097 },
+  '大理': { lat: 25.6063, lng: 100.2676 },
+  '丽江': { lat: 26.8756, lng: 100.2330 },
+  '三亚': { lat: 18.2528, lng: 109.5119 },
+  '厦门': { lat: 24.4798, lng: 118.0894 },
+  '青岛': { lat: 36.0671, lng: 120.3826 },
+  '苏州': { lat: 31.2989, lng: 120.5853 },
+  '长沙': { lat: 28.2282, lng: 112.9388 },
+  '贵阳': { lat: 26.6470, lng: 106.6302 },
+  '桂林': { lat: 25.2740, lng: 110.2992 },
+  '黄山': { lat: 29.7144, lng: 118.3380 },
+  '拉萨': { lat: 29.6525, lng: 91.1721 },
+  '哈尔滨': { lat: 45.8038, lng: 126.5350 },
+  '天津': { lat: 39.0842, lng: 117.2009 },
+  '郑州': { lat: 34.7466, lng: 113.6254 },
+  '济南': { lat: 36.6512, lng: 117.1201 },
+  '南昌': { lat: 28.6820, lng: 115.8579 },
+  '合肥': { lat: 31.8612, lng: 117.2830 },
+  '福州': { lat: 26.0745, lng: 119.2965 },
+  '南宁': { lat: 22.8170, lng: 108.3665 },
+  '乌鲁木齐': { lat: 43.7930, lng: 87.6271 },
+  '西宁': { lat: 36.6233, lng: 101.7783 },
+  '兰州': { lat: 36.0611, lng: 103.8343 },
+  '沈阳': { lat: 41.7968, lng: 123.4315 },
+  '长春': { lat: 43.8868, lng: 125.3245 },
+  '石家庄': { lat: 38.0428, lng: 114.5149 },
+  '太原': { lat: 37.8706, lng: 112.5489 },
+  '呼和浩特': { lat: 40.8427, lng: 111.7492 },
+  '银川': { lat: 38.4870, lng: 106.2309 }
+}
+
+// 从活动列表生成虚拟POI
+function generateVirtualPOIsFromActivities(
+  itinerary: TravelRoute['itinerary'],
+  destinationPreference: string
+): POI[] {
+  const pois: POI[] = []
+
+  // 尝试从目的地偏好中提取城市
+  let baseCoords = cityCoordinates['北京'] // 默认北京
+  for (const [city, coords] of Object.entries(cityCoordinates)) {
+    if (destinationPreference.includes(city) || city.includes(destinationPreference)) {
+      baseCoords = coords
+      break
+    }
+  }
+
+  // 目的地关键词映射
+  const keywordMap: Record<string, { lat: number; lng: number }> = {
+    '云南': cityCoordinates['昆明']!,
+    '西藏': cityCoordinates['拉萨']!,
+    '海南': cityCoordinates['三亚']!,
+    '江南': cityCoordinates['杭州']!,
+    '四川': cityCoordinates['成都']!,
+    '江浙沪': cityCoordinates['上海']!,
+    '华东': cityCoordinates['上海']!,
+    '华南': cityCoordinates['广州']!,
+    '西南': cityCoordinates['昆明']!,
+    '西北': cityCoordinates['兰州']!,
+    '东北': cityCoordinates['哈尔滨']!
+  }
+
+  for (const [keyword, coords] of Object.entries(keywordMap)) {
+    if (destinationPreference.includes(keyword)) {
+      baseCoords = coords
+      break
+    }
+  }
+
+  // 从每日的活动中提取景点
+  itinerary.forEach((day, dayIndex) => {
+    const activities = day.activities || []
+
+    activities.forEach((activity, actIndex) => {
+      // 为每个活动生成一个虚拟POI
+      // 使用确定性偏移确保同一活动总是生成相同坐标
+      const hash = `${day.day}-${activity}`.split('').reduce((acc, char) => {
+        return ((acc << 5) - acc) + char.charCodeAt(0)
+      }, 0)
+
+      const offsetLat = ((hash % 100) - 50) / 1000 // -0.05 到 +0.05
+      const offsetLng = (((hash >> 5) % 100) - 50) / 1000
+
+      // 根据活动名称推断类型
+      let category = '景点'
+      let tag = '推荐景点'
+      if (activity.includes('美食') || activity.includes('餐厅') || activity.includes('吃')) {
+        category = '美食'
+        tag = '当地美食'
+      } else if (activity.includes('住宿') || activity.includes('酒店') || activity.includes('客栈')) {
+        category = '住宿'
+        tag = '推荐住宿'
+      } else if (activity.includes('博物馆') || activity.includes('展览') || activity.includes('文化')) {
+        category = '文化'
+        tag = '文化体验'
+      } else if (activity.includes('自然') || activity.includes('公园') || activity.includes('风景')) {
+        category = '自然风光'
+        tag = '自然美景'
+      } else if (activity.includes('购物') || activity.includes('逛街')) {
+        category = '购物'
+        tag = '购物休闲'
+      } else if (activity.includes('夜景') || activity.includes('灯光')) {
+        category = '夜景'
+        tag = '夜景圣地'
+      }
+
+      // 随机评分 3.5-5.0
+      const rating = (3.5 + (hash % 15) / 10).toFixed(1)
+
+      pois.push({
+        id: `poi-${day.day}-${actIndex}`,
+        name: activity,
+        address: `${destinationPreference}市`,
+        location: {
+          lat: baseCoords.lat + offsetLat,
+          lng: baseCoords.lng + offsetLng
+        },
+        category,
+        rating: parseFloat(rating),
+        tag
+      })
+    })
+  })
+
+  return pois
 }
 
 let openaiClient: OpenAI | null = null
@@ -227,11 +538,31 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
     let messages: any[] = [
       {
         role: 'system' as const,
-        content: TRAVEL_PLANNING_SYSTEM_PROMPT
+        content: TRAVEL_PLANNING_SYSTEM_PROMPT + '\n\n【关键要求】\n生成的3条路线必须在景点选择、活动安排、预算分配上完全不同。\n同一条路线的3天行程也要有不同侧重点（抵达探索日、深度体验日、休闲收尾日）。\n不要生成相似的内容！'
       },
       {
         role: 'user' as const,
-        content: userPrompt
+        content: `${userPrompt}
+
+【强制性差异化要求】
+请严格按照以下规则生成3条路线：
+
+路线1（经典深度游）的3天：
+- Day 1: 必须是"抵达+标志性景点+城市观光"的模式
+- Day 2: 必须是"经典景点深度游+文化体验"的模式
+- Day 3: 必须是"休闲收尾+当地生活体验"的模式
+
+路线2（特色体验游）的3天：
+- Day 1: 必须是"小众景点+探索发现"的模式
+- Day 2: 必须是"特色活动+沉浸体验"的模式
+- Day 3: 必须是"自由活动+美食购物"的模式
+
+路线3（极致体验游）的3天：
+- Day 1: 必须是"VIP景点+顶级享受"的模式
+- Day 2: 必须是"私人定制+高端体验"的模式
+- Day 3: 必须是"SPA休闲+完美收官"的模式
+
+每条路线每天的活动必须具体且有针对性，绝对不能雷同！`
       }
     ]
 
@@ -248,7 +579,14 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
         temperature: AI_CONFIG.temperature,
         max_tokens: AI_CONFIG.maxTokens,
         tools,
-        tool_choice: iteration === 1 ? 'auto' : 'none'
+        tool_choice: iteration === 1 ? 'auto' : 'none',
+        // 第二轮使用 JSON 模式确保输出为有效 JSON
+        // 注意：SiliconFlow/Qwen 可能不完全支持 json_schema，回退到 json_object
+        ...(iteration !== 1 ? {
+          response_format: {
+            type: 'json_object'
+          }
+        } : {})
       }, {
         timeout: AI_CONFIG.timeout
       })
@@ -318,7 +656,8 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
     logger.debug('AI最终响应内容预览:', response.substring(0, 200) + '...')
 
     try {
-      const parsedResponse = JSON.parse(response)
+      // 使用宽松JSON解析处理各种格式问题
+      const parsedResponse = lenientJsonParse(response)
       if (!parsedResponse.routes || !Array.isArray(parsedResponse.routes)) {
         throw new Error('AI响应格式不正确')
       }
@@ -338,10 +677,18 @@ const generateAIRoutes = async (params: TravelParams): Promise<TravelRoute[]> =>
           meals: Array.isArray(day.meals) ? day.meals : [],
           accommodation: day.accommodation,
           imageUrl: day.imageUrl || (day.imageQuery ? generateImageUrl(day.imageQuery, 600, 400) : generateImageUrl('travel activity', 600, 400))
-        })) : []
+        })) : [],
+        // 确保pois.attractions存在，如果AI没有返回则从activities生成虚拟POI
+        pois: route.pois || {
+          attractions: generateVirtualPOIsFromActivities(route.itinerary || [], params.destinationPreference),
+          hotels: [],
+          restaurants: []
+        }
       }))
     } catch (parseError) {
       logger.error('AI响应解析失败:', parseError)
+      logger.error('AI原始响应前1000字符:', response.substring(0, 1000))
+      logger.error('AI原始响应后500字符:', response.substring(response.length - 500))
       throw new Error('AI响应格式错误，无法解析')
     }
   } catch (apiError) {

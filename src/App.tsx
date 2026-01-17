@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { TravelParams, TravelRoute } from './types'
 import { TravelBlindBox } from './components/TravelBlindBox'
-import { BlindBoxReveal } from './components/BlindBoxReveal'
+import { ProgressiveReveal } from './components/ProgressiveReveal'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import BackgroundSelector from './components/BackgroundSelector'
 import { generateTravelRoutes } from './services/travelService'
@@ -186,7 +186,11 @@ function App() {
             )}
 
             {routes.length > 0 && showReveal && (
-              <BlindBoxReveal routes={routes} onClose={() => setShowReveal(false)} />
+              <ProgressiveReveal
+                routes={routes}
+                onClose={() => setShowReveal(false)}
+                onSelect={(route) => console.log('Selected route:', route.id)}
+              />
             )}
           </ErrorBoundary>
         </main>
