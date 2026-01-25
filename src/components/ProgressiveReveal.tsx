@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import type { TravelRoute } from '../types'
 import { Gift, Sparkles, MapPin, Calendar, DollarSign, ChevronRight, X, Map } from 'lucide-react'
-import { RouteMap } from './RouteMap'
-import { RouteDetailModal } from './RouteDetailModal'
-import { generateImageUrlFromQuery, getThemeAwareFallbackImage, isValidImageUrl } from '../utils/imageUtils'
+import { getThemeAwareFallbackImage, getBestRouteImageUrl } from '../utils/imageUtils'
+import { REVEAL_PHASE_CONFIG } from '../config/appConfig'
+import { ModalSkeleton } from './LoadingSkeleton'
+
+// 懒加载大型组件以实现代码分割
+const RouteMap = lazy(() => import('./RouteMap').then(module => ({ default: module.RouteMap })))
+const RouteDetailModal = lazy(() => import('./RouteDetailModal').then(module => ({ default: module.RouteDetailModal })))
 
 interface ProgressiveRevealProps {
   routes: TravelRoute[]
@@ -11,15 +15,10 @@ interface ProgressiveRevealProps {
   onClose: () => void
 }
 
-type RevealPhase = 'ready' | 'theme' | 'hints' | 'destination' | 'complete'
+type RevealPhase = 'ready' | 'theme' | 'hints' | 'complete'
 
-const phaseConfig = {
-  ready: { title: '准备揭晓', icon: '🎁', duration: 2000 },
-  theme: { title: '主题风格', icon: '✨', duration: 1500 },
-  hints: { title: '线索提示', icon: '🔍', duration: 2000 },
-  destination: { title: '目的地', icon: '📍', duration: 2000 },
-  complete: { title: '路线揭晓', icon: '🎉', duration: 0 }
-}
+// 使用配置常量
+const phaseConfig = REVEAL_PHASE_CONFIG
 
 const themeEmojis: Record<string, string> = {
   '深度文化探索': '🏛️',
@@ -36,28 +35,6 @@ const themeEmojis: Record<string, string> = {
   '雪山之旅': '🏔️'
 }
 
-// 备用图片列表 - 高质量旅行图片
-const fallbackImages = [
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',  // 山景
-  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80',  // 自然风光
-  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80',  // 森林
-  'https://images.unsplash.com/photo-1505142468610-179e0ef2b16d?w=800&q=80',  // 海岛
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80',  // 海滩
-  'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=800&q=80',  // 海岸
-  'https://images.unsplash.com/photo-1528164344705-4754268798e8?w=800&q=80',  // 古镇
-  'https://images.unsplash.com/photo-1537996194471-e57df0318bd2?w=800&q=80',  // 梯田
-  'https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=800&q=80',  // 旅行
-  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80',  // 公路旅行
-]
-
-// 基于路线ID生成固定的图片索引
-function getRouteImageIndex(routeId: string): number {
-  const hash = routeId.split('').reduce((acc, char) => {
-    return ((acc << 5) - acc) + char.charCodeAt(0)
-  }, 0)
-  return Math.abs(hash) % fallbackImages.length
-}
-
 function RevealCard({ route, phase, isRevealed, onSelect }: { route: TravelRoute; phase: RevealPhase; isRevealed: boolean; onSelect?: (route: TravelRoute) => void }) {
   const handleRouteSelect = () => {
     if (onSelect) {
@@ -66,23 +43,10 @@ function RevealCard({ route, phase, isRevealed, onSelect }: { route: TravelRoute
   }
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
-  const [currentImageIndex, setCurrentImageIndex] = useState(() => getRouteImageIndex(route.id))
 
-  // 获取封面图片
+  // 获取封面图片 - 使用POI数据生成更精准的图片
   const getCoverImage = (): string => {
-    // 优先使用AI生成的URL
-    if (route.coverImageUrl && isValidImageUrl(route.coverImageUrl)) {
-      return route.coverImageUrl
-    }
-    // 使用coverImageQuery生成动态图片URL
-    if (route.coverImageQuery) {
-      const dynamicUrl = generateImageUrlFromQuery(route.coverImageQuery)
-      if (dynamicUrl) {
-        return dynamicUrl
-      }
-    }
-    // 使用主题感知的备用图片（基于目的地）
-    return getThemeAwareFallbackImage(route.coverImageQuery || route.title)
+    return getBestRouteImageUrl(route)
   }
 
   const coverImage = getCoverImage()
@@ -103,12 +67,12 @@ function RevealCard({ route, phase, isRevealed, onSelect }: { route: TravelRoute
 
   if (!isRevealed) {
     return (
-      <div className="relative bg-white/5 border border-white/10 rounded-3xl p-8 min-h-[400px] flex items-center justify-center overflow-hidden">
+      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 min-h-[420px] flex items-center justify-center overflow-hidden">
         {/* 神秘闪光动画 */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-transparent to-pink-500/20 animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-pink-500/10" />
         <div className="relative text-center">
-          <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-400 to-pink-500 flex items-center justify-center animate-bounce">
-            <Gift className="w-12 h-12 text-white" />
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-400/30 to-pink-500/30 flex items-center justify-center">
+            <Gift className="w-10 h-10 text-white/80" />
           </div>
           <p className="text-slate-400">神秘路线</p>
         </div>
@@ -117,9 +81,9 @@ function RevealCard({ route, phase, isRevealed, onSelect }: { route: TravelRoute
   }
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:border-white/30 transition-all duration-300 cursor-pointer" onClick={handleRouteSelect}>
+    <div className="h-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:border-white/30 hover:bg-white/10 transition-all duration-300 flex flex-col group">
       {/* 封面图片 */}
-      <div className="relative h-48 bg-gradient-to-br from-slate-800 to-slate-900">
+      <div className="relative h-40 bg-gradient-to-br from-slate-800 to-slate-900 flex-shrink-0 overflow-hidden">
         {imageLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
@@ -128,68 +92,87 @@ function RevealCard({ route, phase, isRevealed, onSelect }: { route: TravelRoute
         <img
           src={coverImage}
           alt={route.title}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
+          loading="lazy"
+          decoding="async"
+          className={`w-full h-full object-cover transition-all duration-500 ${imageLoading ? 'opacity-0 scale-105' : 'opacity-100 scale-100 group-hover:scale-110'}`}
           onLoad={() => setImageLoading(false)}
           onError={handleImageError}
         />
         {imageError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-500/20 to-pink-500/20">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-500/10 to-pink-500/10">
             <div className="text-center">
               <div className="text-4xl mb-2">🏔️</div>
               <p className="text-slate-400 text-sm">风景加载失败</p>
             </div>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        {/* 图片遮罩渐变 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+        {/* 主题标签 */}
         <div className="absolute bottom-4 left-4 right-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-3 py-1 bg-cyan-500/80 backdrop-blur-sm rounded-full text-xs text-white">
               {route.theme || '探索之旅'}
             </span>
           </div>
-          <h3 className="text-xl font-bold text-white">{route.title}</h3>
+          <h3 className="text-lg font-bold text-white leading-tight">{route.title}</h3>
         </div>
+
+        {/* 悬浮时显示的遮罩层 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
       {/* 路线信息 */}
-      <div className="p-6 space-y-4">
-        <p className="text-slate-300 text-sm line-clamp-2">{route.description}</p>
+      <div className="p-4 space-y-3 flex-1 flex flex-col custom-scrollbar-dark">
+        {/* 描述 - 限制行数 */}
+        <p className="text-slate-300 text-sm leading-relaxed line-clamp-2 flex-shrink-0">
+          {route.description}
+        </p>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="flex items-center gap-2 text-slate-400">
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm">{route.duration}天</span>
+        {/* 统计信息 */}
+        <div className="grid grid-cols-3 gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <Calendar className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs">{route.duration}天</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-400">
-            <DollarSign className="w-4 h-4" />
-            <span className="text-sm">¥{route.totalCost?.toLocaleString() || '待定'}</span>
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs">¥{route.totalCost?.toLocaleString() || '待定'}</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-400">
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm">{route.highlights?.length || 0}个亮点</span>
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <MapPin className="w-4 h-4 text-amber-400" />
+            <span className="text-xs">{route.highlights?.length || 0}亮点</span>
           </div>
         </div>
 
-        {/* 亮点标签 */}
+        {/* 亮点标签 - 限制最多2个 */}
         {route.highlights && route.highlights.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {route.highlights.slice(0, 3).map((highlight, index) => (
+          <div className="flex flex-wrap gap-1.5 flex-shrink-0">
+            {route.highlights.slice(0, 2).map((highlight, index) => (
               <span
                 key={index}
-                className="px-2 py-1 bg-white/10 rounded-lg text-xs text-slate-300"
+                className="px-2 py-0.5 bg-white/10 rounded-lg text-xs text-slate-300 truncate max-w-[100px]"
+                title={highlight}
               >
                 {highlight}
               </span>
             ))}
+            {route.highlights.length > 2 && (
+              <span className="px-2 py-0.5 bg-gradient-to-r from-cyan-500/20 to-pink-500/20 rounded-lg text-xs text-cyan-300">
+                +{route.highlights.length - 2}
+              </span>
+            )}
           </div>
         )}
 
+        {/* 按钮 */}
         <button
           onClick={handleRouteSelect}
-          className="w-full py-3 bg-gradient-to-r from-cyan-400 to-pink-400 hover:from-cyan-500 hover:to-pink-500 text-white rounded-xl transition-all font-medium flex items-center justify-center gap-2 cursor-pointer"
+          className="mt-auto py-2.5 bg-gradient-to-r from-cyan-400/20 to-pink-400/20 hover:from-cyan-400/30 hover:to-pink-400/30 text-white rounded-xl transition-all font-medium flex items-center justify-center gap-2 cursor-pointer border border-white/10 hover:border-cyan-400/30"
         >
-          <span>查看详情</span>
-          <ChevronRight className="w-4 h-4" />
+          <span className="text-sm">查看详情</span>
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
     </div>
@@ -224,18 +207,9 @@ export function ProgressiveReveal({ routes, onSelect, onClose }: ProgressiveReve
   useEffect(() => {
     if (currentPhase === 'hints') {
       const timer = setTimeout(() => {
-        setCurrentPhase('destination')
-      }, phaseConfig.hints.duration)
-      return () => clearTimeout(timer)
-    }
-  }, [currentPhase])
-
-  useEffect(() => {
-    if (currentPhase === 'destination') {
-      const timer = setTimeout(() => {
         setCurrentPhase('complete')
         setShowRoutes(true)
-      }, phaseConfig.destination.duration)
+      }, phaseConfig.hints.duration)
       return () => clearTimeout(timer)
     }
   }, [currentPhase])
@@ -249,22 +223,30 @@ export function ProgressiveReveal({ routes, onSelect, onClose }: ProgressiveReve
   const progress = Object.keys(phaseConfig).indexOf(currentPhase) / (Object.keys(phaseConfig).length - 1) * 100
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-xl overflow-y-auto">
-      <div className="container mx-auto px-4 py-8">
-        {/* 顶部进度 */}
-        <div className="max-w-4xl mx-auto mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 relative aurora-glow">
+      {/* 背景渐变 */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-500/20 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent" />
+
+      {/* 遮罩层 */}
+      <div className="absolute inset-0 bg-black/30" />
+
+      <div className="relative container mx-auto px-4 py-8 min-h-screen flex flex-col">
+        {/* 页面头部 */}
+        <div className="max-w-4xl mx-auto w-full mb-8">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-3 hover:bg-white/10 rounded-xl transition-colors flex items-center gap-2"
             >
-              <X className="w-6 h-6 text-slate-400" />
+              <X className="w-5 h-5 text-slate-400" />
+              <span className="text-slate-400 text-sm">返回</span>
             </button>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{phaseConfig[currentPhase].icon}</span>
-              <span className="text-xl font-medium text-white">{phaseConfig[currentPhase].title}</span>
+            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10">
+              <span className="text-xl">{phaseConfig[currentPhase].icon}</span>
+              <span className="text-lg font-medium text-white">{phaseConfig[currentPhase].title}</span>
             </div>
-            <div className="w-10" />
+            <div className="w-24" />
           </div>
 
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
@@ -279,46 +261,35 @@ export function ProgressiveReveal({ routes, onSelect, onClose }: ProgressiveReve
         <div className="max-w-6xl mx-auto">
           {/* 渐进式揭晓动画 */}
           {!showRoutes && (
-            <div className="text-center py-20">
-              <div className="mb-8">
-                <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 to-pink-500 mb-4 ${currentPhase !== 'ready' ? 'animate-pulse' : 'animate-bounce'}`}>
-                  <span className="text-6xl">{phaseConfig[currentPhase].icon}</span>
+            <div className="text-center py-16">
+              <div className="mb-6">
+                <div className={`inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-amber-400/30 to-pink-500/30 mb-4 ${currentPhase !== 'ready' ? 'animate-pulse' : 'animate-bounce'}`}>
+                  <span className="text-5xl">{phaseConfig[currentPhase].icon}</span>
                 </div>
               </div>
 
               {currentPhase === 'theme' && (
-                <div className="space-y-4 animate-fade-in">
-                  <h2 className="text-2xl font-bold text-white">您的旅行风格</h2>
-                  <div className="flex items-center justify-center gap-3 text-3xl">
+                <div className="space-y-3 animate-fade-in">
+                  <h2 className="text-xl title-elegant text-white">您的旅行风格</h2>
+                  <div className="flex items-center justify-center gap-3 text-2xl">
                     <span>{themeEmojis[routes[0]?.theme] || '✨'}</span>
-                    <span className="text-cyan-300">{routes[0]?.theme || '探索之旅'}</span>
+                    <span className="text-cyan-300 italic">{routes[0]?.theme || '探索之旅'}</span>
                   </div>
                 </div>
               )}
 
               {currentPhase === 'hints' && (
-                <div className="space-y-4 animate-fade-in max-w-md mx-auto">
-                  <h2 className="text-2xl font-bold text-white mb-4">路线线索</h2>
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3 animate-fade-in max-w-md mx-auto">
+                  <h2 className="text-xl title-elegant text-white mb-3">路线线索</h2>
+                  <div className="grid grid-cols-2 gap-2">
                     {routes[0]?.highlights?.slice(0, 4).map((highlight, index) => (
                       <div
                         key={index}
-                        className="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-300"
+                        className="p-2.5 bg-white/5 border border-white/10 rounded-lg text-slate-300 text-sm"
                       >
                         💡 {highlight}
                       </div>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {currentPhase === 'destination' && (
-                <div className="space-y-4 animate-fade-in">
-                  <h2 className="text-2xl font-bold text-white">目的地即将揭晓</h2>
-                  <div className="flex items-center justify-center gap-2 text-slate-400">
-                    <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
-                    <span>正在打包您的惊喜盲盒...</span>
-                    <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
                   </div>
                 </div>
               )}
@@ -328,14 +299,15 @@ export function ProgressiveReveal({ routes, onSelect, onClose }: ProgressiveReve
           {/* 路线卡片展示 */}
           {showRoutes && (
             <div className="animate-fade-in">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">🎉 您的旅行盲盒</h2>
-                <p className="text-slate-400">3条精心为您准备的路线</p>
+              <div className="text-center mb-6">
+                <h2 className="text-2xl title-elegant text-white mb-1">🎉 您的旅行盲盒</h2>
+                <p className="text-slate-400 text-sm">3条精心为您准备的路线</p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6">
+              {/* 路线卡片网格 - 使用aspect保持一致高度 */}
+              <div className="grid md:grid-cols-3 gap-5">
                 {routes.map((route, index) => (
-                  <div key={route.id} className="relative group">
+                  <div key={route.id} className="relative group h-full card-hover-lift">
                     <RevealCard
                       route={route}
                       phase={currentPhase}
@@ -343,8 +315,8 @@ export function ProgressiveReveal({ routes, onSelect, onClose }: ProgressiveReve
                       onSelect={handleRouteSelect}
                     />
                     {selectedRoute?.id === route.id && (
-                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-cyan-400 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm">✓</span>
+                      <div className="absolute -top-1.5 -right-1.5 w-7 h-7 bg-gradient-to-r from-cyan-400 to-pink-400 rounded-full flex items-center justify-center shadow-lg shadow-cyan-400/30">
+                        <span className="text-white text-xs">✓</span>
                       </div>
                     )}
                   </div>
@@ -352,18 +324,18 @@ export function ProgressiveReveal({ routes, onSelect, onClose }: ProgressiveReve
               </div>
 
               {/* 操作按钮 */}
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                 {selectedRoute && (
                   <>
                     <button
                       onClick={() => setShowMap(true)}
-                      className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white flex items-center gap-2 transition-colors"
+                      className="px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white flex items-center gap-2 transition-colors text-sm"
                     >
-                      <Map className="w-5 h-5" />
+                      <Map className="w-4 h-4" />
                       查看地图
                     </button>
                     <button
-                      className="px-6 py-3 bg-gradient-to-r from-cyan-400 to-pink-400 hover:from-cyan-500 hover:to-pink-500 text-white rounded-xl font-medium transition-all"
+                      className="px-5 py-2.5 bg-gradient-to-r from-cyan-400/20 to-pink-400/20 hover:from-cyan-400/30 hover:to-pink-400/30 text-white rounded-xl font-medium transition-all border border-white/10 text-sm"
                     >
                       开始规划
                     </button>
@@ -376,20 +348,24 @@ export function ProgressiveReveal({ routes, onSelect, onClose }: ProgressiveReve
 
         {/* 地图弹窗 */}
         {selectedRoute && (
-          <RouteMap
-            route={selectedRoute}
-            isOpen={showMap}
-            onClose={() => setShowMap(false)}
-          />
+          <Suspense fallback={<ModalSkeleton />}>
+            <RouteMap
+              route={selectedRoute}
+              isOpen={showMap}
+              onClose={() => setShowMap(false)}
+            />
+          </Suspense>
         )}
 
         {/* 路线详情弹窗 */}
         {selectedRoute && (
-          <RouteDetailModal
-            route={selectedRoute}
-            isOpen={showDetail}
-            onClose={() => setShowDetail(false)}
-          />
+          <Suspense fallback={<ModalSkeleton />}>
+            <RouteDetailModal
+              route={selectedRoute}
+              isOpen={showDetail}
+              onClose={() => setShowDetail(false)}
+            />
+          </Suspense>
         )}
       </div>
     </div>

@@ -9,7 +9,11 @@ interface Step0WelcomeProps {
 
 export function Step0Welcome({ onNext, onStartQuiz, hasStyleResult }: Step0WelcomeProps) {
   return (
-    <div className="text-center space-y-4">
+    <div className="text-center space-y-4 relative">
+      {/* 装饰性几何形状 */}
+      <div className="decoration-geo-1 opacity-50" />
+      <div className="decoration-geo-2 opacity-50" />
+
       <div className="relative">
         <div
           className="w-28 h-28 mx-auto rounded-full bg-gradient-to-br from-amber-400/30 via-orange-400/30 to-red-400/30 backdrop-blur-xl border border-white/20 flex items-center justify-center relative overflow-hidden group cursor-pointer hover:scale-105 transition-all duration-500 shadow-xl shadow-amber-500/30"
@@ -26,19 +30,19 @@ export function Step0Welcome({ onNext, onStartQuiz, hasStyleResult }: Step0Welco
 
       <div className="space-y-3">
         <div className="space-y-2">
-          <h3 className="text-2xl font-display font-bold bg-gradient-to-r from-amber-300 via-orange-200 to-red-300 bg-clip-text text-transparent">
+          <h3 className="text-2xl title-elegant bg-gradient-to-r from-amber-300 via-orange-200 to-red-300 bg-clip-text text-transparent">
             您的专属旅行盲盒
           </h3>
-          <p className="text-lg text-orange-200/90 font-light">
+          <p className="text-lg text-orange-200/90 font-light italic">
             即将为您精心准备一份意想不到的惊喜
           </p>
         </div>
 
         <div className="space-y-2">
-          <p className="text-slate-300/90 font-body leading-relaxed text-sm">
+          <p className="text-slate-300/90 text-premium text-sm">
             每一段旅程都承载着美好的期待
           </p>
-          <p className="text-slate-400/80 font-body text-xs">
+          <p className="text-slate-400/80 text-premium text-xs">
             让我们一起开启这场充满惊喜的探索之旅
           </p>
         </div>
@@ -46,12 +50,12 @@ export function Step0Welcome({ onNext, onStartQuiz, hasStyleResult }: Step0Welco
         <div className="flex items-center justify-center gap-4 pt-2">
           <div className="flex items-center gap-2 text-amber-400/80">
             <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-            <span className="text-sm font-medium">精选体验</span>
+            <span className="text-sm font-medium tracking-wide">精选体验</span>
           </div>
           <div className="w-px h-4 bg-white/20" />
           <div className="flex items-center gap-2 text-orange-400/80">
             <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-            <span className="text-sm font-medium">专属定制</span>
+            <span className="text-sm font-medium tracking-wide">专属定制</span>
           </div>
         </div>
       </div>

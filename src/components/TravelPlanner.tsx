@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Range } from 'react-range'
 import { Calendar, DollarSign, MapPin, Clock, Plane, Car, Train, Bus, Sparkles, Navigation, RefreshCw } from 'lucide-react'
-import type { TravelParams } from '../types'
+import type { TravelParams, DestinationPreference } from '../types'
 import { DESTINATION_PREFERENCES, TRANSPORTATION_OPTIONS, DURATION_OPTIONS } from '../constants'
 import { useGeolocation } from '../hooks/useGeolocation'
 
@@ -17,7 +17,7 @@ export function TravelPlanner({ onGenerateRoutes, loading, logs }: TravelPlanner
     departureCity: '',
     budgetMin: 2000,
     budgetMax: 6000,
-    destinationPreference: '城市',
+    destinationPreference: '神秘冒险' as DestinationPreference,
     duration: 5,
     transportation: '飞机'
   })
@@ -169,7 +169,7 @@ export function TravelPlanner({ onGenerateRoutes, loading, logs }: TravelPlanner
               value={params.destinationPreference}
               onChange={(e) => setParams(prev => ({
                 ...prev,
-                destinationPreference: e.target.value as TravelParams['destinationPreference']
+                destinationPreference: e.target.value as DestinationPreference
               }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             >

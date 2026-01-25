@@ -1,7 +1,10 @@
 /**
  * 图片URL生成工具
  * 根据AI生成的 coverImageQuery 字段生成匹配的 Unsplash 图片URL
+ * 支持根据POI/景点数据生成更精准的图片
  */
+
+import type { TravelRoute, POI } from '../types'
 
 // 目的地关键词到具体景点/场景的映射
 const destinationImageMap: Record<string, string[]> = {
@@ -99,13 +102,35 @@ export function generateImageUrlFromQuery(query?: string, width: number = 800): 
   // 提取图片关键词
   const keywords = extractImageKeywords(query)
 
-  // 使用第一个关键词构建 Unsplash Source URL
-  // Unsplash Source API 可以基于关键词随机返回图片
+  // 使用第一个关键词构建 Unsplash 图片URL
+  // source.unsplash.com 已废弃，使用 images.unsplash.com 配合搜索参数
   const keyword = encodeURIComponent(keywords[0])
 
-  // 使用 Unsplash 的关键词搜索URL
-  // 这样可以获取与目的地更相关的图片
-  return `https://source.unsplash.com/1600x900/?${keyword}&q=80&w=${width}`
+  // 使用 Unsplash 的搜索结果图片URL
+  // 注意：生产环境应使用 Unsplash API 获取真实图片ID
+  return `https://images.unsplash.com/photo-${getDeterministicImageId(keyword)}?w=${width}&q=80`
+}
+
+// 基于关键词生成确定性图片ID
+function getDeterministicImageId(keyword: string): string {
+  const imageIds = [
+    '1506905925346-21bda4d32df4', // 山景
+    '1469474968028-56623f02e42e', // 自然风光
+    '1472214103451-9374bd1c798e', // 森林
+    '1505142468610-359e7d316be0', // 湖景
+    '1500375592092-40eb2168fd21', // 海滩
+    '1518709268805-4e9042af2176', // 雪景
+    '1454491731202-8d36c75c893f', // 雪山
+    '1528164344705-4754268798e8', // 古建筑
+    '1530789253388-582c481c54b0', // 旅行
+  ]
+
+  // 使用关键词生成确定性哈希
+  const hash = keyword.split('').reduce((acc, char) => {
+    return ((acc << 5) - acc) + char.charCodeAt(0)
+  }, 0)
+
+  return imageIds[Math.abs(hash) % imageIds.length]
 }
 
 // 检查URL是否有效（基于已知的服务）
@@ -114,7 +139,6 @@ export function isValidImageUrl(url: string): boolean {
 
   const validDomains = [
     'images.unsplash.com',
-    'source.unsplash.com',
     'photos.unsplash.com',
     'plus.unsplash.com',
     'picurl.cn',
@@ -168,8 +192,9 @@ export function getThemeAwareFallbackImage(query?: string): string {
     'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80',  // 公路旅行
   ]
 
+  // 如果没有查询，使用基于哈希的确定性选择
   if (!query) {
-    return fallbackImages[Math.floor(Math.random() * fallbackImages.length)]
+    return fallbackImages[0] // 默认返回第一张图片
   }
 
   // 根据目的地主题选择图片
@@ -190,9 +215,96 @@ export function getThemeAwareFallbackImage(query?: string): string {
 
   for (const [keyword, indices] of Object.entries(themeMap)) {
     if (query.includes(keyword)) {
-      return fallbackImages[indices[Math.floor(Math.random() * indices.length)]]
+      // 使用关键字哈希来选择，确保相同关键字始终返回相同图片
+      const hash = keyword.split('').reduce((acc, char) => {
+        return ((acc << 5) - acc) + char.charCodeAt(0)
+      }, 0)
+      return fallbackImages[indices[Math.abs(hash) % indices.length]]
     }
   }
 
-  return fallbackImages[Math.floor(Math.random() * fallbackImages.length)]
+  // 默认返回第一张图片
+  return fallbackImages[0]
+}
+
+/**
+ * 根据路线的POI数据生成封面图片URL
+ * 优先使用POI的照片，然后根据POI名称生成对应的图片
+ */
+export function generateImageFromRoutePOI(route: TravelRoute, width: number = 800): string {
+  // 1. 优先使用已有的AI生成URL
+  if (route.coverImageUrl && isValidImageUrl(route.coverImageUrl)) {
+    return route.coverImageUrl
+  }
+
+  // 2. 收集所有POI的名称
+  const poiNames: string[] = []
+
+  // 从pois.attractions收集景点
+  if (route.pois?.attractions) {
+    for (const poi of route.pois.attractions) {
+      poiNames.push(poi.name)
+    }
+  }
+
+  // 从日程安排中的活动收集POI名称
+  for (const day of route.itinerary) {
+    if (day.poiActivities) {
+      for (const activity of day.poiActivities) {
+        if (activity.poi?.name) {
+          poiNames.push(activity.poi.name)
+        }
+      }
+    }
+  }
+
+  // 3. 如果有POI名称，使用第一个POI名称生成图片
+  if (poiNames.length > 0) {
+    const primaryPOI = poiNames[0]
+    const imageUrl = generateImageUrlFromQuery(primaryPOI, width)
+    if (imageUrl) {
+      return imageUrl
+    }
+  }
+
+  // 4. 使用coverImageQuery作为备选
+  if (route.coverImageQuery) {
+    const imageUrl = generateImageUrlFromQuery(route.coverImageQuery, width)
+    if (imageUrl) {
+      return imageUrl
+    }
+  }
+
+  // 5. 最后使用主题感知的备用图片
+  return getThemeAwareFallbackImage(route.coverImageQuery || route.title)
+}
+
+/**
+ * 获取路线的最佳图片URL
+ * 按照优先级：POI照片 > AI生成URL > POI名称生成 > coverImageQuery生成 > 主题备用图
+ */
+export function getBestRouteImageUrl(route: TravelRoute): string {
+  // 1. 优先使用POI的照片（如果有的话）
+  if (route.pois?.attractions && route.pois.attractions.length > 0) {
+    // 找第一个有照片的POI
+    for (const poi of route.pois.attractions) {
+      if (poi.photos && poi.photos.length > 0 && isValidImageUrl(poi.photos[0])) {
+        return poi.photos[0]
+      }
+    }
+  }
+
+  // 2. 检查日程活动中的照片
+  for (const day of route.itinerary) {
+    if (day.poiActivities) {
+      for (const activity of day.poiActivities) {
+        if (activity.imageUrl && isValidImageUrl(activity.imageUrl)) {
+          return activity.imageUrl
+        }
+      }
+    }
+  }
+
+  // 3. 使用POI数据生成图片
+  return generateImageFromRoutePOI(route)
 }

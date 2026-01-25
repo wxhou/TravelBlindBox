@@ -138,6 +138,54 @@ export function MapSkeleton(): React.ReactElement {
   )
 }
 
+// 页面级别骨架屏 - 用于懒加载页面
+export function PageSkeleton(): React.ReactElement {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <div className="w-16 h-16 mx-auto border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+        <p className="text-slate-400 animate-pulse">正在加载...</p>
+      </div>
+    </div>
+  )
+}
+
+// 模态框骨架屏 - 用于懒加载模态框
+export function ModalSkeleton(): React.ReactElement {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4">
+        <div className="space-y-4">
+          <div className="h-6 bg-white/10 rounded w-1/2 mx-auto animate-pulse" />
+          <div className="h-32 bg-white/10 rounded animate-pulse" />
+          <div className="flex justify-center gap-2">
+            <div className="h-10 w-24 bg-white/10 rounded animate-pulse" />
+            <div className="h-10 w-24 bg-white/10 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 便捷类型导出
+export type SkeletonType = 'card' | 'page' | 'modal' | 'map' | 'step'
+
+export function getSkeleton(type: SkeletonType): React.ReactElement {
+  switch (type) {
+    case 'page':
+      return <PageSkeleton />
+    case 'modal':
+      return <ModalSkeleton />
+    case 'map':
+      return <MapSkeleton />
+    case 'step':
+      return <StepSkeleton />
+    default:
+      return <CardSkeleton />
+  }
+}
+
 export default {
   Card: CardSkeleton,
   RouteCard: RouteCardSkeleton,
@@ -145,5 +193,7 @@ export default {
   Step: StepSkeleton,
   ItineraryDay: ItineraryDaySkeleton,
   Stats: StatsSkeleton,
-  Map: MapSkeleton
+  Map: MapSkeleton,
+  Page: PageSkeleton,
+  Modal: ModalSkeleton
 }

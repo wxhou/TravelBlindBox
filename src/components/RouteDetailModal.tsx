@@ -19,11 +19,15 @@ import {
   Coffee
 } from 'lucide-react'
 import { generateImageUrlFromQuery, getThemeAwareFallbackImage, isValidImageUrl } from '../utils/imageUtils'
+import { COST_RATIO } from '../config/appConfig'
+import { BookingConfirmModal, type ContactInfo } from './BookingConfirmModal'
+import logger from '../utils/logger'
 
 interface RouteDetailModalProps {
   route: TravelRoute
   isOpen: boolean
   onClose: () => void
+  onBooking?: (route: TravelRoute, contactInfo: ContactInfo) => Promise<void>
 }
 
 const transportIcons: Record<string, typeof Plane> = {
@@ -166,12 +170,36 @@ function POICard({ poi }: { poi: POI }) {
   )
 }
 
-export function RouteDetailModal({ route, isOpen, onClose }: RouteDetailModalProps) {
+export function RouteDetailModal({ route, isOpen, onClose, onBooking }: RouteDetailModalProps) {
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0]))
   const [activeTab, setActiveTab] = useState<'itinerary' | 'attractions' | 'info'>('itinerary')
   const [coverImage, setCoverImage] = useState<string>('')
   const [imageLoading, setImageLoading] = useState(true)
   const [imageError, setImageError] = useState(false)
+  const [showBooking, setShowBooking] = useState(false)
+
+  // 打开预订确认弹窗
+  const handleStartBooking = () => {
+    if (onBooking) {
+      setShowBooking(true)
+    } else {
+      // 没有回调时直接显示确认弹窗
+      setShowBooking(true)
+    }
+  }
+
+  // 处理预订确认
+  const handleBookingConfirm = async (contactInfo: ContactInfo) => {
+    logger.info('预订信息:', { route: route.title, ...contactInfo })
+
+    // 调用回调函数（如果有）
+    if (onBooking) {
+      await onBooking(route, contactInfo)
+    } else {
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 1500))
+    }
+  }
 
   // 获取封面图片
   const getCoverImage = (): string => {
@@ -234,7 +262,7 @@ export function RouteDetailModal({ route, isOpen, onClose }: RouteDetailModalPro
   const allPois = route.pois?.attractions || []
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-xl overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-xl overflow-y-auto custom-scrollbar-dark aurora-glow">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -262,6 +290,8 @@ export function RouteDetailModal({ route, isOpen, onClose }: RouteDetailModalPro
             <img
               src={coverImage}
               alt={route.title}
+              loading="lazy"
+              decoding="async"
               className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
               onLoad={handleImageLoad}
               onError={handleImageError}
@@ -277,7 +307,7 @@ export function RouteDetailModal({ route, isOpen, onClose }: RouteDetailModalPro
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
           <div className="absolute bottom-4 left-4 right-4">
-            <h1 className="text-2xl font-bold text-white mb-2">{route.title}</h1>
+            <h1 className="text-2xl title-elegant text-white mb-2">{route.title}</h1>
             <p className="text-slate-300 text-sm line-clamp-2">{route.description}</p>
           </div>
         </div>
@@ -286,22 +316,22 @@ export function RouteDetailModal({ route, isOpen, onClose }: RouteDetailModalPro
         <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
             <Calendar className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">{route.duration}</div>
+            <div className="text-2xl numbers-premium text-white">{route.duration}</div>
             <div className="text-slate-400 text-sm">旅行天数</div>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
             <DollarSign className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">¥{(route.totalCost || 0).toLocaleString()}</div>
+            <div className="text-2xl numbers-premium text-white">¥{(route.totalCost || 0).toLocaleString()}</div>
             <div className="text-slate-400 text-sm">预计花费</div>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
             <MapPin className="w-6 h-6 text-amber-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">{route.highlights?.length || 0}</div>
+            <div className="text-2xl numbers-premium text-white">{route.highlights?.length || 0}</div>
             <div className="text-slate-400 text-sm">精选亮点</div>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
             <Star className="w-6 h-6 text-pink-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">{allPois.length}</div>
+            <div className="text-2xl numbers-premium text-white">{allPois.length}</div>
             <div className="text-slate-400 text-sm">景点数量</div>
           </div>
         </div>
@@ -376,23 +406,23 @@ export function RouteDetailModal({ route, isOpen, onClose }: RouteDetailModalPro
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-white/10">
                 <span className="text-slate-400">住宿费用</span>
-                <span className="text-white">¥{(route.totalCost || 0) * 0.35} - ¥{(route.totalCost || 0) * 0.45}</span>
+                <span className="text-white">¥{(route.totalCost || 0) * COST_RATIO.accommodation.min} - ¥{(route.totalCost || 0) * COST_RATIO.accommodation.max}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-white/10">
                 <span className="text-slate-400">交通费用</span>
-                <span className="text-white">¥{(route.totalCost || 0) * 0.25} - ¥{(route.totalCost || 0) * 0.35}</span>
+                <span className="text-white">¥{(route.totalCost || 0) * COST_RATIO.transportation.min} - ¥{(route.totalCost || 0) * COST_RATIO.transportation.max}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-white/10">
                 <span className="text-slate-400">餐饮费用</span>
-                <span className="text-white">¥{(route.totalCost || 0) * 0.15} - ¥{(route.totalCost || 0) * 0.20}</span>
+                <span className="text-white">¥{(route.totalCost || 0) * COST_RATIO.dining.min} - ¥{(route.totalCost || 0) * COST_RATIO.dining.max}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-white/10">
                 <span className="text-slate-400">门票及活动</span>
-                <span className="text-white">¥{(route.totalCost || 0) * 0.10} - ¥{(route.totalCost || 0) * 0.15}</span>
+                <span className="text-white">¥{(route.totalCost || 0) * COST_RATIO.tickets.min} - ¥{(route.totalCost || 0) * COST_RATIO.tickets.max}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-slate-400">其他费用</span>
-                <span className="text-white">¥{(route.totalCost || 0) * 0.05} - ¥{(route.totalCost || 0) * 0.10}</span>
+                <span className="text-white">¥{(route.totalCost || 0) * COST_RATIO.other.min} - ¥{(route.totalCost || 0) * COST_RATIO.other.max}</span>
               </div>
             </div>
 
@@ -414,11 +444,20 @@ export function RouteDetailModal({ route, isOpen, onClose }: RouteDetailModalPro
             返回选择
           </button>
           <button
+            onClick={handleStartBooking}
             className="flex-1 py-3 bg-gradient-to-r from-cyan-400 to-pink-400 hover:from-cyan-500 hover:to-pink-500 text-white rounded-xl font-medium transition-all"
           >
             开始预订
           </button>
         </div>
+
+        {/* Booking Confirm Modal */}
+        <BookingConfirmModal
+          route={route}
+          isOpen={showBooking}
+          onClose={() => setShowBooking(false)}
+          onConfirm={handleBookingConfirm}
+        />
       </div>
     </div>
   )

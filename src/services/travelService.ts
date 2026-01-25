@@ -3,6 +3,7 @@ import type { TravelParams, TravelRoute, ApiResponse, POI } from '../types'
 import { AI_CONFIG, validateConfig, isConfigured } from './aiConfig'
 import { TRAVEL_PLANNING_SYSTEM_PROMPT, generateTravelPlanningPrompt } from './prompts'
 import { unifiedAmapService } from './unifiedAmapService'
+import { mapToSimplePreference, type DestinationPreference } from '../types'
 import logger from '../utils/logger'
 
 // JSON Schema for Structured Outputs - 确保AI生成符合预期的JSON格式
@@ -148,8 +149,8 @@ function lenientJsonParse<T = any>(jsonString: string): T {
   cleaned = cleaned.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
 
   // 修复未加引号的属性名（JavaScript对象字面量语法）
-  // 匹配 key: value 中的 key
-  cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
+  // 匹配 key: value 中的 key，支持英文、中文、日文、韩文等Unicode字符
+  cleaned = cleaned.replace(/([{,]\s*)([\p{L}\p{N}_$][\p{L}\p{N}_$]*)\s*:/gu, '$1"$2":')
 
   // 尝试标准JSON.parse
   try {
@@ -170,26 +171,46 @@ function lenientJsonParse<T = any>(jsonString: string): T {
 
       return JSON.parse(singleQuoteFixed)
     } catch (e2) {
-      // 记录详细的错误信息用于调试
-      const errorPosition = e2 instanceof Error && e2.message.includes('position')
-        ? e2.message.match(/position (\d+)/)?.[1]
-        : 'unknown'
+      logger.debug('第二次JSON解析失败，尝试更激进的修复...')
 
-      let contextAround = ''
-      if (errorPosition && !isNaN(parseInt(errorPosition))) {
-        const pos = parseInt(errorPosition)
-        const start = Math.max(0, pos - 200)
-        const end = Math.min(cleaned.length, pos + 200)
-        contextAround = cleaned.substring(start, end)
+      try {
+        // 更激进的修复：处理可能的中文标点问题
+        // 将中文冒号替换为英文冒号
+        let aggressivelyFixed = cleaned.replace(/：/g, ':')
+
+        // 处理连续的多个冒号
+        aggressivelyFixed = aggressivelyFixed.replace(/:+/g, ':')
+
+        // 处理 value 后缺少逗号的情况（常见的AI生成问题）
+        aggressivelyFixed = aggressivelyFixed.replace(/(["'\d\]])\s+([{"'\p{L}])/gu, '$1,$2')
+
+        // 移除重复的逗号
+        aggressivelyFixed = aggressivelyFixed.replace(/,\s*,/g, ',')
+
+        return JSON.parse(aggressivelyFixed)
+      } catch (e3) {
+        // 记录详细的错误信息用于调试
+        const errorPosition = e3 instanceof Error && e3.message.includes('position')
+          ? e3.message.match(/position (\d+)/)?.[1]
+          : 'unknown'
+
+        let contextAround = ''
+        if (errorPosition && !isNaN(parseInt(errorPosition))) {
+          const pos = parseInt(errorPosition)
+          const start = Math.max(0, pos - 200)
+          const end = Math.min(cleaned.length, pos + 200)
+          contextAround = cleaned.substring(start, end)
+        }
+
+        logger.error('JSON解析最终失败:')
+        logger.error('  错误位置:', errorPosition)
+        logger.error('  上下文:', contextAround)
+        logger.error('  内容前500字符:', cleaned.substring(0, Math.min(500, cleaned.length)))
+        const tailStart = Math.max(0, cleaned.length - 500)
+        logger.error('  内容后500字符:', cleaned.substring(tailStart))
+
+        throw new Error(`JSON解析失败: ${e3 instanceof Error ? e3.message : '未知错误'}`)
       }
-
-      logger.error('JSON解析最终失败:')
-      logger.error('  错误位置:', errorPosition)
-      logger.error('  上下文:', contextAround)
-      logger.error('  内容前500字符:', cleaned.substring(0, 500))
-      logger.error('  内容后500字符:', cleaned.substring(cleaned.length - 500))
-
-      throw new Error(`JSON解析失败: ${e2 instanceof Error ? e2.message : '未知错误'}`)
     }
   }
 }
@@ -238,14 +259,17 @@ const cityCoordinates: Record<string, { lat: number; lng: number }> = {
 // 从活动列表生成虚拟POI
 function generateVirtualPOIsFromActivities(
   itinerary: TravelRoute['itinerary'],
-  destinationPreference: string
+  destinationPreference: DestinationPreference
 ): POI[] {
   const pois: POI[] = []
+
+  // 将详细偏好转换为简单偏好
+  const simplePreference = mapToSimplePreference(destinationPreference)
 
   // 尝试从目的地偏好中提取城市
   let baseCoords = cityCoordinates['北京'] // 默认北京
   for (const [city, coords] of Object.entries(cityCoordinates)) {
-    if (destinationPreference.includes(city) || city.includes(destinationPreference)) {
+    if (simplePreference.includes(city) || city.includes(simplePreference)) {
       baseCoords = coords
       break
     }
@@ -267,7 +291,7 @@ function generateVirtualPOIsFromActivities(
   }
 
   for (const [keyword, coords] of Object.entries(keywordMap)) {
-    if (destinationPreference.includes(keyword)) {
+    if (simplePreference.includes(keyword)) {
       baseCoords = coords
       break
     }
@@ -316,7 +340,7 @@ function generateVirtualPOIsFromActivities(
       pois.push({
         id: `poi-${day.day}-${actIndex}`,
         name: activity,
-        address: `${destinationPreference}市`,
+        address: `${simplePreference}市`,
         location: {
           lat: baseCoords.lat + offsetLat,
           lng: baseCoords.lng + offsetLng
@@ -412,18 +436,15 @@ const generateImageUrl = (query: string, width: number = 800, height: number = 6
     '1507003211169-0a8a29bdf997', // 风景3
   ]
 
-  // 使用更复杂的哈希算法，基于查询文本生成伪随机索引
+  // 使用确定性哈希算法，基于查询文本生成固定的图片索引
+  // 确保相同的查询始终返回相同的图片URL，以支持浏览器缓存
   const hash = query.split('').reduce((acc, char) => {
     const charCode = char.charCodeAt(0)
     return ((acc << 5) - acc) + charCode + (acc << 3) - (acc << 1)
   }, 0)
 
-  // 添加随机因子确保不同时间生成的图片不同
-  const timeComponent = Date.now() % 100000
-  const randomComponent = Math.floor(Math.random() * 100)
-
-  const combinedHash = Math.abs(hash + timeComponent + randomComponent)
-  const imageIndex = combinedHash % imageIds.length
+  // 仅使用查询的哈希值，确保相同查询返回相同图片
+  const imageIndex = Math.abs(hash) % imageIds.length
   const imageId = imageIds[imageIndex]
 
   return `https://images.unsplash.com/photo-${imageId}?w=${width}&h=${height}&fit=crop&q=80`

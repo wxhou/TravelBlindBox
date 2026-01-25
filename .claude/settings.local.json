@@ -17,7 +17,13 @@
       "mcp__chrome-devtools__get_network_request",
       "mcp__MiniMax__web_search",
       "WebFetch(domain:openai.com)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Skill(superpowers:systematic-debugging)",
+      "Bash(npx tsc:*)",
+      "Skill(frontend-design:frontend-design)",
+      "mcp__chrome-devtools__close_page",
+      "WebSearch",
+      "WebFetch(domain:agentation.dev)"
     ]
   }
 }

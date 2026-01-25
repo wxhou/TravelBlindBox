@@ -45,12 +45,38 @@ export interface POIAccommodation {
   imageUrl?: string
 }
 
+// 目的地偏好类型
+export type DestinationPreference =
+  | '神秘冒险'
+  | '热带天堂'
+  | '雪山秘境'
+  | '都市奇遇'
+  | '文化古迹'
+  | '星空浪漫'
+
+// 简化的目的地类型（用于AI处理）
+export type SimpleDestinationPreference = '城市' | '自然' | '美食' | '文化' | '冒险'
+
+// 目的地偏好映射到简单类型（用于AI生成）
+export const DESTINATION_PREFERENCE_MAP: Record<DestinationPreference, SimpleDestinationPreference> = {
+  '神秘冒险': '冒险',
+  '热带天堂': '自然',
+  '雪山秘境': '自然',
+  '都市奇遇': '城市',
+  '文化古迹': '文化',
+  '星空浪漫': '自然'
+}
+
+export function mapToSimplePreference(preference: DestinationPreference): SimpleDestinationPreference {
+  return DESTINATION_PREFERENCE_MAP[preference]
+}
+
 export interface TravelParams {
   departureDate: string
   departureCity: string
   budgetMin: number
   budgetMax: number
-  destinationPreference: '城市' | '自然' | '美食' | '文化' | '冒险'
+  destinationPreference: DestinationPreference
   duration: number
   transportation: '飞机' | '火车' | '自驾' | '公交'
 }

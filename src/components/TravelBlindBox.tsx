@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
-import type { TravelParams, TravelStyleResult } from '../types'
+import type { TravelParams, TravelStyleResult, DestinationPreference } from '../types'
+import { DESTINATION_PREFERENCE_MAP } from '../types'
 import { useGeolocation } from '../hooks/useGeolocation'
-import { getUnifiedAmapService } from '../services/unifiedAmapService'
+import { unifiedAmapService } from '../services/unifiedAmapService'
 import { isMcpEnabled } from '../services/serviceConfig'
 import { RouteHistory } from './RouteHistory'
 import { VoiceAssistantUI } from './VoiceAssistantUI'
 import { TravelStyleQuiz } from './TravelStyleQuiz'
-import { Clock, Mic } from 'lucide-react'
+import { Clock, Mic, Globe, Link } from 'lucide-react'
 import {
   Step0Welcome,
   Step1Destination,
@@ -42,7 +43,7 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
   const [showVoiceAssistant, setShowVoiceAssistant] = useState(false)
 
   const [preferences, setPreferences] = useState<TravelParams>({
-    destinationPreference: '冒险',
+    destinationPreference: '神秘冒险' as DestinationPreference,
     budgetMin: 1000,
     budgetMax: 5000,
     duration: 3,
@@ -55,7 +56,7 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
   const [searchMethod, setSearchMethod] = useState<'rest' | 'mcp'>('rest')
   const [showStyleQuiz, setShowStyleQuiz] = useState(false)
   const [styleResult, setStyleResult] = useState<TravelStyleResult | null>(null)
-  const unifiedService = getUnifiedAmapService()
+  const unifiedService = unifiedAmapService
 
   useEffect(() => {
     if (!isAutoLocated && !locationLoading) {
@@ -94,18 +95,18 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
   const handleStyleQuizComplete = (result: TravelStyleResult) => {
     setStyleResult(result)
     setShowStyleQuiz(false)
-    // 根据风格设置默认偏好
-    const styleToPreference: Record<string, TravelParams['destinationPreference']> = {
-      '冒险探索': '冒险',
-      '休闲度假': '自然',
-      '文化深度': '文化',
-      '美食之旅': '美食',
-      '极致尊享': '城市',
-      '穷游体验': '自然'
+    // 根据风格设置默认偏好（映射到详细的目的地偏好类型）
+    const styleToPreference: Record<string, DestinationPreference> = {
+      '冒险探索': '神秘冒险',
+      '休闲度假': '热带天堂',
+      '文化深度': '文化古迹',
+      '美食之旅': '热带天堂',
+      '极致尊享': '都市奇遇',
+      '穷游体验': '雪山秘境'
     }
     setPreferences(prev => ({
       ...prev,
-      destinationPreference: styleToPreference[result.primaryStyle] || '自然'
+      destinationPreference: styleToPreference[result.primaryStyle] || '神秘冒险'
     }))
   }
 
@@ -217,7 +218,10 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
         {/* API Mode Selection */}
         <div className="mt-4 p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-display font-semibold text-white">🔗 API调用方式</h4>
+            <h4 className="text-sm font-display font-semibold text-white flex items-center gap-2">
+              <Link className="w-4 h-4 text-cyan-400" />
+              API调用方式
+            </h4>
             <div className="flex items-center gap-2">
               {mcpConnected ? (
                 <div className="flex items-center gap-1 text-green-400">
@@ -247,7 +251,8 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
                   : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
               }`}
             >
-              🗺️ REST API
+              <Globe className="w-4 h-4" />
+              REST API
             </button>
             <button
               onClick={() => setSearchMethod('mcp')}
@@ -260,7 +265,8 @@ export function TravelBlindBox({ onGenerateRoutes, loading, logs }: TravelBlindB
                   : 'bg-white/5 text-slate-500 border border-white/10 cursor-not-allowed opacity-50'
               }`}
             >
-              🔗 MCP Hook
+              <Link className="w-4 h-4" />
+              MCP Hook
             </button>
           </div>
 

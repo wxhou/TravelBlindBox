@@ -1,6 +1,6 @@
 import { unifiedAmapService } from './unifiedAmapService'
 import { GeolocationService } from './geolocationService'
-import type { AMapPOI } from './unifiedAmapService'
+import type { AMapPOI } from './amapService'
 import type { GeolocationResult } from './geolocationService'
 
 export interface POIStatus {

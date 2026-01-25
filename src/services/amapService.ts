@@ -20,15 +20,22 @@ interface AMapSearchResult {
   total: number
 }
 
+import logger from '../utils/logger'
+
 class AMapService {
-  private apiKey: string = '9f8e5af62cebb2c124583e5023c19fe4'
+  private apiKey: string = import.meta.env.VITE_AMAP_API_KEY || ''
   private maxRetries: number = 3
   private retryDelay: number = 1000
   private cache = new Map<string, { data: AMapPOI[], timestamp: number }>()
   private cacheTimeout = 1000 * 60 * 30
+  private readonly MAX_CACHE_SIZE = 100 // 最多缓存100个查询结果
 
   constructor() {
-    console.log('高德地图服务初始化完成')
+    if (!this.apiKey) {
+      logger.warn('高德地图API密钥未配置，请设置VITE_AMAP_API_KEY环境变量')
+    } else {
+      logger.info('高德地图服务初始化完成')
+    }
   }
 
   private async delay(ms: number): Promise<void> {
@@ -63,7 +70,26 @@ class AMapService {
   }
 
   private setCachedData(key: string, data: AMapPOI[]): void {
+    // 清理过期缓存
+    this.cleanupCacheIfNeeded()
     this.cache.set(key, { data, timestamp: Date.now() })
+  }
+
+  private cleanupCacheIfNeeded(): void {
+    // 当缓存超过最大值时，删除最旧的条目
+    if (this.cache.size >= this.MAX_CACHE_SIZE) {
+      let oldestKey: string | null = null
+      let oldestTimestamp = Infinity
+      for (const [key, entry] of this.cache.entries()) {
+        if (entry.timestamp < oldestTimestamp) {
+          oldestTimestamp = entry.timestamp
+          oldestKey = key
+        }
+      }
+      if (oldestKey) {
+        this.cache.delete(oldestKey)
+      }
+    }
   }
 
   async searchPOIs(query: string, city: string, category?: string, limit: number = 10): Promise<AMapPOI[]> {

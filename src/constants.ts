@@ -1,10 +1,13 @@
-export const DESTINATION_PREFERENCES = [
-  '城市',
-  '自然',
-  '美食',
-  '文化',
-  '冒险'
-] as const
+import type { DestinationPreference } from './types'
+
+export const DESTINATION_PREFERENCES: DestinationPreference[] = [
+  '神秘冒险',
+  '热带天堂',
+  '雪山秘境',
+  '都市奇遇',
+  '文化古迹',
+  '星空浪漫'
+]
 
 export const TRANSPORTATION_OPTIONS = [
   '飞机',

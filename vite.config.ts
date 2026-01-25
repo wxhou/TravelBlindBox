@@ -16,11 +16,5 @@ export default defineConfig({
   define: {
     global: 'globalThis',
     'process.env': {},
-    __MCP_CONFIG__: {
-      amap: {
-        url: 'https://mcp.amap.com/sse?key=9f8e5af62cebb2c124583e5023c19fe4',
-        webKey: '9f8e5af62cebb2c124583e5023c19fe4',
-      },
-    },
   },
 })

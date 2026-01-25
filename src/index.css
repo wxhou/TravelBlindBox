@@ -1,12 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: 'DM Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  /* 高级字体栈 */
+  --font-display: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-accent: 'Cormorant Garamond', Georgia, serif;
+
+  /* 字体回退 */
+  --font-sans: 'Plus Jakarta Sans', 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+
+  font-family: var(--font-body);
+  line-height: 1.6;
   font-weight: 400;
 
   /* Fluid Typography Variables */
@@ -18,6 +27,7 @@
   --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 1.875rem);
   --text-3xl: clamp(1.875rem, 1.6rem + 1.375vw, 2.25rem);
   --text-4xl: clamp(2.25rem, 1.9rem + 1.75vw, 3rem);
+  --text-5xl: clamp(3rem, 2.5rem + 2.5vw, 4rem);
 
   /* Responsive Spacing Variables */
   --spacing-xs: clamp(0.25rem, 0.2rem + 0.25vw, 0.375rem);
@@ -32,12 +42,786 @@
   --touch-target-spacious: 56px;
 }
 
+/* 高级字体类 */
 .font-display {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .font-body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.font-accent {
+  font-family: var(--font-accent);
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* ========================================
+   艺术纹理与背景效果
+   ======================================== */
+
+/* 噪点纹理叠加层 */
+.noise-texture {
+  position: relative;
+}
+
+.noise-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 渐变网格纹理 */
+.gradient-mesh {
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-mesh::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background:
+    radial-gradient(at 40% 20%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(236, 72, 153, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(245, 158, 11, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 60% 100%, rgba(6, 182, 212, 0.12) 0px, transparent 50%);
+  animation: gradientMeshMove 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes gradientMeshMove {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(2%, 2%) rotate(1deg); }
+  50% { transform: translate(0, 4%) rotate(0deg); }
+  75% { transform: translate(-2%, 2%) rotate(-1deg); }
+}
+
+/* 微光效果 */
+.aurora-glow {
+  position: relative;
+}
+
+.aurora-glow::before {
+  content: '';
+  position: absolute;
+  inset: -100%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    rgba(6, 182, 212, 0.03) 60deg,
+    rgba(236, 72, 153, 0.03) 120deg,
+    transparent 180deg,
+    rgba(245, 158, 11, 0.02) 240deg,
+    rgba(16, 185, 129, 0.03) 300deg,
+    transparent 360deg
+  );
+  animation: auroraRotate 30s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes auroraRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   装饰性边框与分隔线
+   ======================================== */
+
+/* 高级渐变边框 */
+.border-elegant {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.border-elegant::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(6, 182, 212, 0.3) 0%,
+    rgba(236, 72, 153, 0.3) 50%,
+    rgba(245, 158, 11, 0.3) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 角落装饰 */
+.corner-decoration {
+  position: relative;
+}
+
+.corner-decoration::before,
+.corner-decoration::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: rgba(6, 182, 212, 0.4);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.corner-decoration::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+  border-top-left-radius: 12px;
+}
+
+.corner-decoration::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+  border-bottom-right-radius: 12px;
+}
+
+/* 艺术分隔线 */
+.divider-elegant {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.divider-elegant::before,
+.divider-elegant::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+}
+
+.divider-elegant span {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* 点线分隔 */
+.divider-dotted {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.divider-dotted::before,
+.divider-dotted::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 0px,
+    rgba(255, 255, 255, 0.2) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* ========================================
+   高级阴影与光效
+   ======================================== */
+
+/* 柔和发光阴影 */
+.shadow-glow-cyan {
+  box-shadow:
+    0 0 20px rgba(6, 182, 212, 0.15),
+    0 0 40px rgba(6, 182, 212, 0.1),
+    0 0 60px rgba(6, 182, 212, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.shadow-glow-pink {
+  box-shadow:
+    0 0 20px rgba(236, 72, 153, 0.15),
+    0 0 40px rgba(236, 72, 153, 0.1),
+    0 0 60px rgba(236, 72, 153, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.shadow-glow-amber {
+  box-shadow:
+    0 0 20px rgba(245, 158, 11, 0.15),
+    0 0 40px rgba(245, 158, 11, 0.1),
+    0 0 60px rgba(245, 158, 11, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 悬浮光效 */
+.hover-glow {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-glow:hover {
+  box-shadow:
+    0 0 30px rgba(6, 182, 212, 0.2),
+    0 0 60px rgba(236, 72, 153, 0.1),
+    0 0 90px rgba(245, 158, 11, 0.05);
+}
+
+/* 内部发光 */
+.inner-glow {
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================
+   高级动画效果
+   ======================================== */
+
+/* 缓慢漂浮动画 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(-10px) rotate(1deg);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(-5px) rotate(0deg);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(-15px) rotate(-1deg);
+    opacity: 0.85;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* 脉冲光晕 */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(6, 182, 212, 0.3),
+      0 0 40px rgba(6, 182, 212, 0.2),
+      0 0 60px rgba(6, 182, 212, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(6, 182, 212, 0.4),
+      0 0 60px rgba(6, 182, 212, 0.3),
+      0 0 90px rgba(6, 182, 212, 0.15);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* 渐变文字动画 */
+@keyframes gradientText {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-text {
+  background-size: 200% 200%;
+  animation: gradientText 3s ease infinite;
+}
+
+/* 滑入淡入 */
+@keyframes slideInFade {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-slide-in-fade {
+  animation: slideInFade 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 缩放淡入 */
+@keyframes scaleInFade {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in-fade {
+  animation: scaleInFade 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 交错淡入 - 延迟类 */
+.stagger-1 { animation-delay: 0.1s; opacity: 0; }
+.stagger-2 { animation-delay: 0.2s; opacity: 0; }
+.stagger-3 { animation-delay: 0.3s; opacity: 0; }
+.stagger-4 { animation-delay: 0.4s; opacity: 0; }
+.stagger-5 { animation-delay: 0.5s; opacity: 0; }
+
+/* 闪烁效果 */
+@keyframes shimmer {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* 旋转渐变边框 */
+@keyframes borderRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-border-rotate {
+  animation: borderRotate 10s linear infinite;
+}
+
+/* ========================================
+   玻璃拟态增强
+   ======================================== */
+
+.glass-elegant {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-premium {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================
+   装饰性圆点与形状
+   ======================================== */
+
+/* 装饰圆点 */
+.decoration-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+/* 装饰圆环 */
+.decoration-ring {
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+/* 几何装饰 */
+.decoration-geo-1,
+.decoration-geo-2 {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.decoration-geo-1 {
+  top: 0;
+  right: 0;
+  border-top: none;
+  border-right: none;
+  border-bottom-left-radius: 100%;
+}
+
+.decoration-geo-2 {
+  bottom: 0;
+  left: 0;
+  border-bottom: none;
+  border-left: none;
+  border-top-right-radius: 100%;
+}
+
+/* ========================================
+   按钮样式增强
+   ======================================== */
+
+.btn-elegant {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-elegant::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.btn-elegant:hover::before {
+  transform: translateX(100%);
+}
+
+.btn-elegant:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+/* ========================================
+   卡片悬停效果
+   ======================================== */
+
+.card-hover-lift {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(6, 182, 212, 0.1);
+}
+
+/* 边缘发光 */
+.card-hover-edge {
+  position: relative;
+}
+
+.card-hover-edge::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(6, 182, 212, 0.5) 0%,
+    rgba(236, 72, 153, 0.5) 50%,
+    rgba(245, 158, 11, 0.5) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.card-hover-edge:hover::after {
+  opacity: 1;
+}
+
+/* ========================================
+   文字特效
+   ======================================== */
+
+/* 文字发光 */
+.text-glow {
+  text-shadow:
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 40px currentColor;
+}
+
+/* 轻微文字阴影 - 增强可读性 */
+.text-shadow-sm {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 中等文字阴影 */
+.text-shadow-md {
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 强文字阴影 */
+.text-shadow-lg {
+  text-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* 文字渐变轮廓 */
+.text-outline-gradient {
+  -webkit-text-stroke: 1px transparent;
+  background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* 强调文字 */
+.text-emphasis {
+  position: relative;
+  display: inline-block;
+}
+
+.text-emphasis::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    currentColor 50%,
+    transparent 100%
+  );
+  opacity: 0.5;
+}
+
+/* ========================================
+   自定义滚动条样式 - 高级感
+   ======================================== */
+
+/* 基础滚动条样式 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 182, 212, 0.4) transparent;
+}
+
+/* Webkit 滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.4);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.6);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(6, 182, 212, 0.8);
+}
+
+/* 暗色滚动条 - 适用于深色背景 */
+.custom-scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 渐变滚动条 */
+.custom-scrollbar-gradient {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.custom-scrollbar-gradient::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar-gradient::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.custom-scrollbar-gradient::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #06b6d4, #ec4899);
+  border-radius: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-scrollbar-gradient::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #22d3ee, #f472b6);
+}
+
+/* 迷你滚动条 - 更紧凑 */
+.custom-scrollbar-mini {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.custom-scrollbar-mini::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.custom-scrollbar-mini::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-mini::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.custom-scrollbar-mini::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* 滚动条容器 - 悬停显示 */
+.scrollbar-hover-container {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+.scrollbar-hover-container:hover {
+  scrollbar-color: rgba(6, 182, 212, 0.4) transparent;
+}
+
+.scrollbar-hover-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-hover-container::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.scrollbar-hover-container::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.scrollbar-hover-container:hover::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.4);
+}
+
+/* ========================================
+   响应式增强
+   ======================================== */
+
+@media (max-width: 640px) {
+  .gradient-mesh::before {
+    background:
+      radial-gradient(at 40% 20%, rgba(6, 182, 212, 0.1) 0px, transparent 40%),
+      radial-gradient(at 80% 0%, rgba(236, 72, 153, 0.08) 0px, transparent 40%);
+  }
+
+  .decoration-geo-1,
+  .decoration-geo-2 {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* 标题样式增强 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* 特殊标题样式 - 用于重要标题 */
+.title-elegant {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+/* 副标题样式 */
+.title-subtle {
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+/* 正文样式增强 */
+.text-premium {
+  font-family: var(--font-body);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.7;
+}
+
+/* 引用样式 */
+.quote-elegant {
+  font-family: var(--font-accent);
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+/* 数字样式 */
+.numbers-premium {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* 响应式字体大小工具类 */
