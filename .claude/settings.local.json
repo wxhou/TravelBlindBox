@@ -23,7 +23,8 @@
       "Skill(frontend-design:frontend-design)",
       "mcp__chrome-devtools__close_page",
       "WebSearch",
-      "WebFetch(domain:agentation.dev)"
+      "WebFetch(domain:agentation.dev)",
+      "Bash(openspec status:*)"
     ]
   }
 }

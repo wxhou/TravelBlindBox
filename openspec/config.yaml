@@ -1,0 +1,94 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+context: |
+  ## Project Purpose
+  TravelBlindBox是一个基于AI的智能旅行盲盒生成器，旨在为用户提供个性化的旅行路线规划体验。项目支持传统REST API和现代化的MCP（Model Context Protocol）两种服务调用方式。
+
+  ## Core Features
+  - AI驱动的智能路线生成
+  - 双模式地图服务集成（REST API + MCP Hook）
+  - 智能语音助手（多语言识别、智能对话、实时翻译）
+  - 语音控制导航和命令执行
+  - 响应式用户界面设计
+
+  ## Tech Stack
+  ### Frontend
+  - React 19.2.0 + TypeScript 5.9.3
+  - Vite 7.2.4 + Tailwind CSS 3.4.14
+
+  ### Maps & Location
+  - 高德地图 API
+  - @amap/amap-jsapi-loader 1.0.1
+
+  ### AI Services
+  - OpenAI API 6.15.0 (GPT-4 for travel route generation)
+  - lucide-react 0.562.0 (icons)
+
+  ### Voice Technology
+  - Web Speech API (browser-native speech recognition/synthesis)
+  - MyMemory API + LibreTranslate API (translation)
+
+  ### Protocols
+  - @modelcontextprotocol/sdk 1.25.1 (MCP)
+
+  ## Code Conventions
+
+  ### TypeScript
+  - Strict mode enabled, no implicit `any`
+  - Interface-first design
+  - ES modules syntax
+
+  ### React
+  - Functional components + Hooks pattern
+  - Custom hooks for logic reuse
+  - TypeScript interfaces for Props
+
+  ### Naming
+  - Components: PascalCase (e.g., TravelBlindBox.tsx)
+  - Functions/variables: camelCase (e.g., useAmapMcp)
+  - Constants: UPPER_SNAKE_CASE
+  - Files: kebab-case
+
+  ## Architecture Patterns
+
+  ### Service Layer
+  - Unified service interface pattern (unifiedAmapService.ts)
+  - Adapter pattern for different calling methods
+  - Configuration-driven service switching
+
+  ### Error Handling
+  - Layered error handling
+  - Graceful degradation and retry strategies
+  - User-friendly error messages
+
+  ## Domain Knowledge
+
+  ### Travel Planning
+  - POI (Point of Interest) data structures and search
+  - Route planning and navigation algorithms
+  - Geocoding and reverse geocoding
+  - Travel time estimation
+
+  ### Map Services
+  - 高德地图API usage patterns
+  - MCP protocol standard interfaces
+  - Coordinate system conversion
+
+  ## Constraints
+  - Browser: Modern browsers (ES2020+)
+  - TypeScript strict mode (no implicit any)
+  - API keys via environment variables
+  - Network connectivity required for map/AI services
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
